@@ -13,6 +13,7 @@ CI 關卡 2 · Spec 契約驗證（分類法漂移）
 
 用法：python tools/check_taxonomy_drift.py --spec specs/taxonomy.yaml --src src
 """
+
 from __future__ import annotations
 
 import argparse
@@ -92,8 +93,10 @@ def main() -> int:
             print(f"   {s}")
         if len(suspicious) > 40:
             print(f"   …另有 {len(suspicious) - 40} 項")
-        print("\n分類值請從 specs/taxonomy.yaml 讀取，不要硬寫在程式碼裡。"
-              "\n若確認是誤判，將該檔加入本腳本的 EXEMPT 或補充白名單規則。")
+        print(
+            "\n分類值請從 specs/taxonomy.yaml 讀取，不要硬寫在程式碼裡。"
+            "\n若確認是誤判，將該檔加入本腳本的 EXEMPT 或補充白名單規則。"
+        )
         return 1
 
     print(f"✔ 分類法契約驗證通過（已知分類值 {len(known)} 個）")

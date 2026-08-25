@@ -14,6 +14,7 @@ L0 · 跨來源日對帳偵測器
 這支偵測器攔截的是「歸因與報表」類工單，也是 §02 那兩個 2026 平台事件的第二道防線：
 當 changelog 監控沒接住時，對帳會在隔天發現數字對不上。
 """
+
 from __future__ import annotations
 
 from datetime import date
@@ -49,7 +50,7 @@ class CrossSourceReconDetector(Detector):
     def _evaluate(self, client: str, d: date, r: dict[str, Any]) -> list[Finding]:
         backend = r.get("backend_orders") or 0
         if backend <= 0:
-            return []       # 沒有訂單就沒有比較基準，不告警
+            return []  # 沒有訂單就沒有比較基準，不告警
 
         out: list[Finding] = []
         pairs = {
@@ -69,30 +70,32 @@ class CrossSourceReconDetector(Detector):
 
             self._streak[streak_key] = self._streak.get(streak_key, 0) + 1
             if self._streak[streak_key] < CONSECUTIVE_DAYS_TO_ESCALATE:
-                continue    # 單日超標先觀察，可能只是資料延遲
+                continue  # 單日超標先觀察，可能只是資料延遲
 
-            out.append(Finding(
-                detector_id=self.detector_id,
-                severity="S1" if variance >= SEVERE_THRESHOLD_PCT else "S2",
-                title=f"{label}差異 {variance:.0f}%（連續 {self._streak[streak_key]} 日）",
-                summary=(
-                    f"{client} 在 {d} 的{label}差異達 {variance:.1f}%，"
-                    f"已連續 {self._streak[streak_key]} 日超過 {VARIANCE_THRESHOLD_PCT:.0f}% 門檻。"
-                    f"請先確認歸因視窗設定是否一致，再檢查追蹤是否有遺失。"
-                ),
-                client=client,
-                asset_id=key,
-                evidence={
-                    "date": str(d),
-                    "platform_conversions": r.get("platform_conversions"),
-                    "ga4_conversions": r.get("ga4_conversions"),
-                    "backend_orders": backend,
-                    "variance_pct": round(variance, 2),
-                    "consecutive_days": self._streak[streak_key],
-                    "attribution_windows": r.get("attribution_windows"),
-                    "note": "平台與 GA4 歸因邏輯本就不同，門檻 20% 以下屬預期行為",
-                },
-                maps_to_issue_category="歸因與報表",
-                suggested_action_id=None,   # 需人判斷，不自動修復
-            ))
+            out.append(
+                Finding(
+                    detector_id=self.detector_id,
+                    severity="S1" if variance >= SEVERE_THRESHOLD_PCT else "S2",
+                    title=f"{label}差異 {variance:.0f}%（連續 {self._streak[streak_key]} 日）",
+                    summary=(
+                        f"{client} 在 {d} 的{label}差異達 {variance:.1f}%，"
+                        f"已連續 {self._streak[streak_key]} 日超過 {VARIANCE_THRESHOLD_PCT:.0f}% 門檻。"
+                        f"請先確認歸因視窗設定是否一致，再檢查追蹤是否有遺失。"
+                    ),
+                    client=client,
+                    asset_id=key,
+                    evidence={
+                        "date": str(d),
+                        "platform_conversions": r.get("platform_conversions"),
+                        "ga4_conversions": r.get("ga4_conversions"),
+                        "backend_orders": backend,
+                        "variance_pct": round(variance, 2),
+                        "consecutive_days": self._streak[streak_key],
+                        "attribution_windows": r.get("attribution_windows"),
+                        "note": "平台與 GA4 歸因邏輯本就不同，門檻 20% 以下屬預期行為",
+                    },
+                    maps_to_issue_category="歸因與報表",
+                    suggested_action_id=None,  # 需人判斷，不自動修復
+                )
+            )
         return out

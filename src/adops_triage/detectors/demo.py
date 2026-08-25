@@ -4,6 +4,7 @@
 跨源對帳刻意跑兩天：第一天只計數不告警，第二天才告警——這是為了避免
 單日波動製造誤報，看得到這個行為才算看懂這支偵測器。
 """
+
 from __future__ import annotations
 
 from datetime import date, timedelta

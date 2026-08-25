@@ -14,6 +14,7 @@ L0 · Feed 健檢偵測器
 回傳的 Finding 會建議 playbook 動作 `feed.repush`（低風險、可逆、可自動執行）；
 若重推後仍不符，代表是上游 ERP/OMS 問題而非同步延遲，才升級為工單。
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -23,13 +24,13 @@ from .base import Detector, Finding
 
 # 各欄位的容忍度與嚴重度。價格與庫存最嚴格，因為它們直接觸發拒登。
 FIELD_RULES: dict[str, dict[str, Any]] = {
-    "price":        {"tolerance_pct": 0.0,  "severity": "S1", "label": "價格"},
+    "price": {"tolerance_pct": 0.0, "severity": "S1", "label": "價格"},
     "availability": {"tolerance_pct": None, "severity": "S1", "label": "庫存狀態"},
-    "currency":     {"tolerance_pct": None, "severity": "S1", "label": "幣別"},
-    "sale_price":   {"tolerance_pct": 0.0,  "severity": "S2", "label": "特價"},
-    "gtin":         {"tolerance_pct": None, "severity": "S2", "label": "GTIN"},
-    "title":        {"tolerance_pct": None, "severity": "S3", "label": "標題"},
-    "image_link":   {"tolerance_pct": None, "severity": "S3", "label": "主圖"},
+    "currency": {"tolerance_pct": None, "severity": "S1", "label": "幣別"},
+    "sale_price": {"tolerance_pct": 0.0, "severity": "S2", "label": "特價"},
+    "gtin": {"tolerance_pct": None, "severity": "S2", "label": "GTIN"},
+    "title": {"tolerance_pct": None, "severity": "S3", "label": "標題"},
+    "image_link": {"tolerance_pct": None, "severity": "S3", "label": "主圖"},
 }
 
 # 不符比率超過這個門檻才告警，避免單一商品的雜訊
@@ -89,28 +90,30 @@ class FeedHealthDetector(Detector):
                 if not items:
                     continue
 
-            out.append(Finding(
-                detector_id=self.detector_id,
-                severity=rule["severity"],
-                title=f"{rule['label']}與到達頁不符（{len(items)} 檔商品）",
-                summary=(
-                    f"{cat['client']} 的 catalog {cat['catalog_id']} 有 {len(items)} 檔商品的"
-                    f"{rule['label']}與到達頁不一致，抽樣不符率 {rate:.1f}%。"
-                    f"此為 Merchant Center 商品拒登的主要原因，建議先重推 feed 排除同步延遲。"
-                ),
-                client=cat["client"],
-                asset_id=cat["catalog_id"],
-                evidence={
-                    "field": field_name,
-                    "mismatch_count": len(items),
-                    "sample_size": sample_size,
-                    "mismatch_rate_pct": round(rate, 2),
-                    "samples": [vars(m) for m in items[:10]],
-                    "structured_data_present": result.get("structured_data_present"),
-                },
-                maps_to_issue_category="商品資訊與Feed",
-                suggested_action_id="feed.repush",
-            ))
+            out.append(
+                Finding(
+                    detector_id=self.detector_id,
+                    severity=rule["severity"],
+                    title=f"{rule['label']}與到達頁不符（{len(items)} 檔商品）",
+                    summary=(
+                        f"{cat['client']} 的 catalog {cat['catalog_id']} 有 {len(items)} 檔商品的"
+                        f"{rule['label']}與到達頁不一致，抽樣不符率 {rate:.1f}%。"
+                        f"此為 Merchant Center 商品拒登的主要原因，建議先重推 feed 排除同步延遲。"
+                    ),
+                    client=cat["client"],
+                    asset_id=cat["catalog_id"],
+                    evidence={
+                        "field": field_name,
+                        "mismatch_count": len(items),
+                        "sample_size": sample_size,
+                        "mismatch_rate_pct": round(rate, 2),
+                        "samples": [vars(m) for m in items[:10]],
+                        "structured_data_present": result.get("structured_data_present"),
+                    },
+                    maps_to_issue_category="商品資訊與Feed",
+                    suggested_action_id="feed.repush",
+                )
+            )
         return out
 
     @staticmethod

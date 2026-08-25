@@ -12,6 +12,7 @@ LLM 只負責從自由文字抽取欄位（`extract_with_llm` 為介面，尚未
     釐清次數每增加一次，處理時數增加 22.2%。
     因此把成本擋在入口，比讓診斷變聰明更划算。
 """
+
 from __future__ import annotations
 
 import json
@@ -78,12 +79,10 @@ class IntakeAgent:
         self.schema = json.loads(schema_path.read_text(encoding="utf-8"))
         # 過濾掉 JSON Schema 的 $comment 等註解鍵，只留真正的權重
         self.weights: dict[str, int] = {
-            k: v for k, v in self.schema["x-completeness-weights"].items()
-            if not k.startswith("$")
+            k: v for k, v in self.schema["x-completeness-weights"].items() if not k.startswith("$")
         }
         self.guards: dict[str, Any] = {
-            k: v for k, v in self.schema["x-submission-guards"].items()
-            if not k.startswith("$")
+            k: v for k, v in self.schema["x-submission-guards"].items() if not k.startswith("$")
         }
 
     # ---------------------------------------------------------------- 必填
@@ -99,6 +98,7 @@ class IntakeAgent:
     @staticmethod
     def _matches(cond: dict, ticket: dict) -> bool:
         import re
+
         for field_name, spec in cond.items():
             val = ticket.get(field_name)
             if val in (None, "", "—"):
@@ -154,7 +154,9 @@ class IntakeAgent:
             tpl = QUESTION_TEMPLATES.get(f)
             if not tpl:
                 continue
-            hint = ASSET_HINTS.get(ticket.get("platform", ""), "") if f == "affected_asset_id" else ""
+            hint = (
+                ASSET_HINTS.get(ticket.get("platform", ""), "") if f == "affected_asset_id" else ""
+            )
             out.append(tpl.format(hint=hint))
         return out
 
@@ -175,7 +177,9 @@ class IntakeAgent:
                 t.setdefault(k, v)
         events = lookups.get("platform_events", [])
         for ev in events:
-            if ev["platform"] == t.get("platform") and ev["date"] <= str(t.get("occurred_from", "")):
+            if ev["platform"] == t.get("platform") and ev["date"] <= str(
+                t.get("occurred_from", "")
+            ):
                 t["_changelog_hit"] = ev["id"]
                 break
         return t

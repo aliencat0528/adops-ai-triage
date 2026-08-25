@@ -4,6 +4,7 @@
 尚未實作。實作規格見 CLAUDE.md 第 4 節與 TASKS.md。
 介面刻意先定義，讓上下游可以先接起來測試。
 """
+
 from __future__ import annotations
 
 
