@@ -13,6 +13,7 @@ CI 關卡 2 · Spec 契約驗證（分類法漂移）
 
 用法：python tools/check_taxonomy_drift.py --spec specs/taxonomy.yaml --src src
 """
+
 from __future__ import annotations
 
 import argparse
@@ -22,8 +23,13 @@ from pathlib import Path
 
 import yaml
 
-EXEMPT = {"generate_dataset.py", "export_xlsx.py", "baseline.py"}
+# 這些檔案的中文字串本來就不是分類值：
+#   generate_dataset / export_xlsx / baseline —— 產生或呈現資料本身
+#   readonly.py —— 探針的 mock 回傳值（假的稽核紀錄、假的變更摘要），不是分類法
+#   demo.py —— demo 用的範例工單與客戶名，性質同 mock 資料
+EXEMPT = {"generate_dataset.py", "export_xlsx.py", "baseline.py", "readonly.py", "demo.py"}
 CJK_STRING = re.compile(r'["\']([^"\']*[一-鿿][^"\']*)["\']')
+LABEL_VALUE = re.compile(r'"label"\s*:\s*"[^"]*"')
 
 
 def collect_known(spec: dict) -> set[str]:
@@ -38,6 +44,12 @@ def collect_known(spec: dict) -> set[str]:
     known |= {v["label"] for v in spec.get("ai_automation_levels", {}).values()}
     known |= set(spec.get("severity_levels", {}).values())
     known |= set(spec.get("priority_levels", {}).values())
+    # 資料層用的是 `S1-投放中斷/嚴重失真` 這種「代碼-標籤」複合形式，
+    # taxonomy 裡存的是拆開的兩半。不補這一段，合法的嚴重度字串會被誤報成漂移。
+    for group in ("severity_levels", "priority_levels", "ai_automation_levels"):
+        for code, val in spec.get(group, {}).items():
+            label = val["label"] if isinstance(val, dict) else val
+            known.add(f"{code}-{label}")
     return known
 
 
@@ -70,6 +82,9 @@ def main() -> int:
                 # 白名單：明顯是提示語或欄位名而非分類值
                 if s.endswith(("嗎", "呢", "了", "吧")) or s.startswith(("請", "這", "目前")):
                     continue
+                # 白名單：`"label": "庫存狀態"` 這種顯示標籤不是分類值
+                if LABEL_VALUE.search(line) and f'"{s}"' in LABEL_VALUE.search(line).group(0):
+                    continue
                 suspicious.append(f"{py}:{lineno} 可疑的硬寫分類字串 `{s}`")
 
     if suspicious:
@@ -78,8 +93,10 @@ def main() -> int:
             print(f"   {s}")
         if len(suspicious) > 40:
             print(f"   …另有 {len(suspicious) - 40} 項")
-        print("\n分類值請從 specs/taxonomy.yaml 讀取，不要硬寫在程式碼裡。"
-              "\n若確認是誤判，將該檔加入本腳本的 EXEMPT 或補充白名單規則。")
+        print(
+            "\n分類值請從 specs/taxonomy.yaml 讀取，不要硬寫在程式碼裡。"
+            "\n若確認是誤判，將該檔加入本腳本的 EXEMPT 或補充白名單規則。"
+        )
         return 1
 
     print(f"✔ 分類法契約驗證通過（已知分類值 {len(known)} 個）")

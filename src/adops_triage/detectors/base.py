@@ -9,6 +9,7 @@ L0 · 偵測器基底
   2. 每個 Finding 都要能回答「這對應到哪一類工單」——這是回測攔截率的依據
   3. 去重：同一 fingerprint 在 dedup_window_hours 內不重複告警
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -30,7 +31,7 @@ class Finding:
     asset_id: str
     evidence: dict[str, Any]
     maps_to_issue_category: str
-    suggested_action_id: str | None = None   # 必須存在於 playbook_registry.yaml
+    suggested_action_id: str | None = None  # 必須存在於 playbook_registry.yaml
     detected_at: datetime = field(default_factory=datetime.now)
 
     @property
@@ -56,7 +57,7 @@ class Finding:
 
 class Detector(ABC):
     detector_id: str = "base"
-    schedule: str = "hourly"            # hourly / daily / event
+    schedule: str = "hourly"  # hourly / daily / event
     dedup_window_hours: int = 24
 
     def __init__(self) -> None:

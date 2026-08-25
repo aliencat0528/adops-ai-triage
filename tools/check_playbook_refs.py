@@ -13,6 +13,7 @@ Remediation Agent 只能從 registry 挑動作，不得生成新動作——這�
 
 用法：python tools/check_playbook_refs.py --spec specs/playbook_registry.yaml --src src
 """
+
 from __future__ import annotations
 
 import argparse
@@ -45,28 +46,39 @@ def main() -> int:
             for m in ACTION_PATTERN.finditer(line):
                 candidate = m.group(1)
                 prefix = candidate.split(".")[0]
-                if prefix not in {"feed", "pipeline", "audience", "token", "report",
-                                  "gtm", "capi", "consent", "campaign", "schema", "account"}:
+                if prefix not in {
+                    "feed",
+                    "pipeline",
+                    "audience",
+                    "token",
+                    "report",
+                    "gtm",
+                    "capi",
+                    "consent",
+                    "campaign",
+                    "schema",
+                    "account",
+                }:
                     continue
                 if candidate not in registry:
-                    errors.append(
-                        f"{py}:{lineno} 引用了未註冊的動作 `{candidate}`"
-                    )
+                    errors.append(f"{py}:{lineno} 引用了未註冊的動作 `{candidate}`")
                 elif candidate in high_risk and AUTO_EXEC_HINT.search(line):
-                    errors.append(
-                        f"{py}:{lineno} 高風險動作 `{candidate}` 出現在自動執行路徑"
-                    )
+                    errors.append(f"{py}:{lineno} 高風險動作 `{candidate}` 出現在自動執行路徑")
 
     if errors:
         print("✘ Playbook 引用檢查失敗：\n")
         for e in errors:
             print(f"   {e}")
-        print("\n所有修復動作都必須先在 specs/playbook_registry.yaml 註冊，"
-              "並標明 risk_tier / reversible / rollback。")
+        print(
+            "\n所有修復動作都必須先在 specs/playbook_registry.yaml 註冊，"
+            "並標明 risk_tier / reversible / rollback。"
+        )
         return 1
 
-    print(f"✔ Playbook 引用檢查通過（registry 共 {len(registry)} 個動作，"
-          f"其中 {len(high_risk)} 個為 recommendation-only）")
+    print(
+        f"✔ Playbook 引用檢查通過（registry 共 {len(registry)} 個動作，"
+        f"其中 {len(high_risk)} 個為 recommendation-only）"
+    )
     return 0
 
 

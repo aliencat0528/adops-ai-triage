@@ -21,7 +21,7 @@
 
 ```bash
 make setup      # 建虛擬環境並安裝依賴
-make data       # 生成 640 筆需求單 → data/raw/tickets.csv
+make data       # 生成 640 筆 × 53 欄需求單 → data/raw/tickets.csv
 make xlsx       # 匯出四工作表的 xlsx（給人看）
 make analyze    # 跑 baseline 分析 → reports/baseline.json
 make test       # 17 個測試
@@ -39,7 +39,7 @@ make guardrails # 三道架構護欄檢查
 | `CLAUDE.md` | **專案憲法**。Claude Code 進來先讀這份 |
 | `TASKS.md` | 開發 backlog，60 個編號任務分六階段 |
 | `specs/taxonomy.yaml` | 分類法唯一真實來源（問題類別／根因／處理方式／AI 分級／風險層級） |
-| `specs/ticket.schema.json` | 50 欄位工單契約，含**依問題大類動態變更的必填欄位** |
+| `specs/ticket.schema.json` | 51 欄位工單契約，含**依問題大類動態變更的必填欄位** |
 | `specs/playbook_registry.yaml` | 修復動作允許清單，含 risk_tier / 可逆性 / 回滾方式 |
 | `specs/probes.yaml` | 七支唯讀探針的介面定義 |
 | `src/adops_triage/generate_dataset.py` | 資料生成器（含 2026 真實平台事件錨點） |

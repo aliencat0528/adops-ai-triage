@@ -38,7 +38,7 @@ python tools\check_taxonomy_drift.py --spec specs\taxonomy.yaml --src src
 
 跑完應該看到：
 ```
-✔ 640 筆 × 54 欄 → data/raw/tickets.csv
+✔ 640 筆 × 53 欄 → data/raw/tickets.csv
 ✔ data/raw/廣告支援需求單.xlsx（4 個工作表，640 筆）
 17 passed
 ✔ 探針唯讀檢查通過

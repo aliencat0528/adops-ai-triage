@@ -41,7 +41,7 @@
 |---|---|---|---|
 | L0 | 感知層 Detection | 六個主動偵測器，在開單前攔截 | **實作 2 個原型** |
 | L1 | 受理層 Intake | 對話式提單、完整度評分、自動補件 | **實作評分器** |
-| L2 | 分診層 Triage | 分類／嚴重度／路由／重複單合併 | **實作規則+相似檢索** |
+| L2 | 分診層 Triage | 分類／嚴重度／路由／重複單合併 | 介面（`triage.py` 為 stub） |
 | L3 | 診斷層 Diagnosis | 呼叫唯讀探針、產出根因假設 | 介面 + mock |
 | L4 | 處置層 Execution | 受控執行（允許清單、速率限制、audit log） | 介面 + 風險閘門 |
 | L5 | 驗證層 Verification | 重跑檢測、soak 期監控、未通過退回 | 介面 |
@@ -115,7 +115,7 @@ TASKS.md        開發 backlog — 不知道要做什麼就看這裡
 make setup        # 建虛擬環境並安裝依賴
 make data         # 生成 640 筆需求單 → data/raw/
 make analyze      # 跑 baseline 與 AI 機會分析，輸出到 reports/
-make demo         # 跑提單評分 + 分診 demo
+make demo         # 跑提單評分 demo（L2 分診尚未實作）
 make detect       # 跑兩個偵測器原型
 make test         # 跑測試
 make lint         # ruff check + format

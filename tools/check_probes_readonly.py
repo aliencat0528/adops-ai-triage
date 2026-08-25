@@ -14,6 +14,7 @@ CI 關卡 3 · 探針唯讀靜態掃描
 
 用法：python tools/check_probes_readonly.py src/adops_triage/probes
 """
+
 from __future__ import annotations
 
 import ast
@@ -22,9 +23,25 @@ from pathlib import Path
 
 # 寫入語意的函式名／方法名
 FORBIDDEN_CALLS = {
-    "post", "put", "patch", "delete", "write", "update", "create", "insert",
-    "upsert", "remove", "drop", "truncate", "execute", "commit", "save",
-    "set_", "publish", "send", "upload",
+    "post",
+    "put",
+    "patch",
+    "delete",
+    "write",
+    "update",
+    "create",
+    "insert",
+    "upsert",
+    "remove",
+    "drop",
+    "truncate",
+    "execute",
+    "commit",
+    "save",
+    "set_",
+    "publish",
+    "send",
+    "upload",
 }
 # 允許的例外（唯讀語境下的同名函式）
 ALLOWLIST = {"write_cache", "save_snapshot_readonly"}
@@ -45,9 +62,10 @@ class ProbeVisitor(ast.NodeVisitor):
             name = node.func.id
         if name and name not in ALLOWLIST:
             low = name.lower()
-            if low in FORBIDDEN_CALLS or any(low.startswith(f) for f in ("post_", "put_", "delete_")):
-                self.violations.append(
-                    f"{self.path}:{node.lineno} 呼叫了寫入語意的 `{name}()`")
+            if low in FORBIDDEN_CALLS or any(
+                low.startswith(f) for f in ("post_", "put_", "delete_")
+            ):
+                self.violations.append(f"{self.path}:{node.lineno} 呼叫了寫入語意的 `{name}()`")
         self.generic_visit(node)
 
     def visit_Import(self, node: ast.Import) -> None:  # noqa: N802
@@ -74,8 +92,7 @@ def main(argv: list[str]) -> int:
         print("✘ 探針唯讀檢查失敗：\n")
         for x in all_violations:
             print(f"   {x}")
-        print("\n探針不得有任何寫入行為。修復動作請走 L4，並在 "
-              "specs/playbook_registry.yaml 註冊。")
+        print("\n探針不得有任何寫入行為。修復動作請走 L4，並在 specs/playbook_registry.yaml 註冊。")
         return 1
 
     print("✔ 探針唯讀檢查通過")

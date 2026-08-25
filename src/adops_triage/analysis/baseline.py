@@ -7,6 +7,7 @@ Baseline 分析
 
 用法：PYTHONPATH=src python -m adops_triage.analysis.baseline
 """
+
 from __future__ import annotations
 
 import json
@@ -17,6 +18,10 @@ import pandas as pd
 
 CSV = Path("data/raw/tickets.csv")
 OUT = Path("reports/baseline.json")
+
+
+# `load()` 為了分析方便加的欄，不屬於工單契約，統計欄位數時要扣掉
+DERIVED_COLS = ("csat_num",)
 
 
 def load() -> pd.DataFrame:
@@ -45,7 +50,7 @@ def main() -> None:
     # ---------- 0. 概況
     r["overview"] = {
         "tickets": len(df),
-        "columns": len(df.columns),
+        "columns": len([c for c in df.columns if c not in DERIVED_COLS]),
         "date_from": df["submitted_at"].min().strftime("%Y-%m-%d"),
         "date_to": df["submitted_at"].max().strftime("%Y-%m-%d"),
         "closed_rate_pct": round(len(closed) / len(df) * 100, 1),
@@ -66,18 +71,25 @@ def main() -> None:
     }
 
     # ---------- 2. 釐清次數 → 處理時數（核心因果鏈）
-    grp = df.groupby("clarification_rounds").agg(
-        n=("ticket_id", "count"),
-        median_hours=("resolution_hours", "median"),
-        median_eng=("eng_effort_hours", "median"),
-        mean_csat=("csat_num", "mean"),
-    ).reset_index()
+    grp = (
+        df.groupby("clarification_rounds")
+        .agg(
+            n=("ticket_id", "count"),
+            median_hours=("resolution_hours", "median"),
+            median_eng=("eng_effort_hours", "median"),
+            mean_csat=("csat_num", "mean"),
+        )
+        .reset_index()
+    )
     grp = grp[grp["n"] >= 8]
     r["clarification_cost_curve"] = [
-        {"rounds": int(x["clarification_rounds"]), "n": int(x["n"]),
-         "median_hours": round(float(x["median_hours"]), 1),
-         "median_eng_hours": round(float(x["median_eng"]), 1),
-         "mean_csat": None if pd.isna(x["mean_csat"]) else round(float(x["mean_csat"]), 2)}
+        {
+            "rounds": int(x["clarification_rounds"]),
+            "n": int(x["n"]),
+            "median_hours": round(float(x["median_hours"]), 1),
+            "median_eng_hours": round(float(x["median_eng"]), 1),
+            "mean_csat": None if pd.isna(x["mean_csat"]) else round(float(x["mean_csat"]), 2),
+        }
         for _, x in grp.iterrows()
     ]
     # log-linear 迴歸：log(hours) ~ clarification_rounds
@@ -88,81 +100,116 @@ def main() -> None:
         "slope": round(float(slope), 4),
         "multiplier_per_round_pct": round((float(np.exp(slope)) - 1) * 100, 1),
         "corr_completeness_vs_clar": round(
-            float(df["info_completeness_score"].corr(df["clarification_rounds"])), 3),
+            float(df["info_completeness_score"].corr(df["clarification_rounds"])), 3
+        ),
         "corr_clar_vs_hours": round(
-            float(df["clarification_rounds"].corr(df["resolution_hours"])), 3),
+            float(df["clarification_rounds"].corr(df["resolution_hours"])), 3
+        ),
     }
 
     # ---------- 3. 「越急越講不清楚」假說
     r["urgency_vs_quality"] = {
-        p: {"n": int(g.shape[0]),
+        p: {
+            "n": int(g.shape[0]),
             "median_completeness": float(g["info_completeness_score"].median()),
-            "median_clar": float(g["clarification_rounds"].median())}
+            "median_clar": float(g["clarification_rounds"].median()),
+        }
         for p, g in df.groupby("priority")
     }
 
     # ---------- 4. AI 自動化分級
-    lvl = df.groupby("ai_automation_level").agg(
-        tickets=("ticket_id", "count"),
-        eng_hours=("eng_effort_hours", "sum"),
-        median_hours=("resolution_hours", "median"),
-    ).reset_index().sort_values("ai_automation_level")
+    lvl = (
+        df.groupby("ai_automation_level")
+        .agg(
+            tickets=("ticket_id", "count"),
+            eng_hours=("eng_effort_hours", "sum"),
+            median_hours=("resolution_hours", "median"),
+        )
+        .reset_index()
+        .sort_values("ai_automation_level")
+    )
     total_eng = df["eng_effort_hours"].sum()
     r["ai_levels"] = [
-        {"level": x["ai_automation_level"], "tickets": int(x["tickets"]),
-         "ticket_pct": round(x["tickets"] / len(df) * 100, 1),
-         "eng_hours": round(float(x["eng_hours"]), 1),
-         "eng_hour_pct": round(float(x["eng_hours"]) / total_eng * 100, 1),
-         "median_hours": round(float(x["median_hours"]), 1)}
+        {
+            "level": x["ai_automation_level"],
+            "tickets": int(x["tickets"]),
+            "ticket_pct": round(x["tickets"] / len(df) * 100, 1),
+            "eng_hours": round(float(x["eng_hours"]), 1),
+            "eng_hour_pct": round(float(x["eng_hours"]) / total_eng * 100, 1),
+            "median_hours": round(float(x["median_hours"]), 1),
+        }
         for _, x in lvl.iterrows()
     ]
 
     # ---------- 5. 可預防性
-    prev = df.groupby("ai_preventable").agg(
-        tickets=("ticket_id", "count"), eng_hours=("eng_effort_hours", "sum")).reset_index()
+    prev = (
+        df.groupby("ai_preventable")
+        .agg(tickets=("ticket_id", "count"), eng_hours=("eng_effort_hours", "sum"))
+        .reset_index()
+    )
     r["preventability"] = [
-        {"level": x["ai_preventable"], "tickets": int(x["tickets"]),
-         "ticket_pct": round(x["tickets"] / len(df) * 100, 1),
-         "eng_hours": round(float(x["eng_hours"]), 1)}
+        {
+            "level": x["ai_preventable"],
+            "tickets": int(x["tickets"]),
+            "ticket_pct": round(x["tickets"] / len(df) * 100, 1),
+            "eng_hours": round(float(x["eng_hours"]), 1),
+        }
         for _, x in prev.iterrows()
     ]
 
     # ---------- 6. 根因
-    rc = df.groupby("root_cause_category").agg(
-        tickets=("ticket_id", "count"),
-        eng_hours=("eng_effort_hours", "sum"),
-        median_hours=("resolution_hours", "median"),
-        recurrence_pct=("recurrence_90d", lambda s: (s == "是").mean() * 100),
-    ).reset_index().sort_values("tickets", ascending=False)
+    rc = (
+        df.groupby("root_cause_category")
+        .agg(
+            tickets=("ticket_id", "count"),
+            eng_hours=("eng_effort_hours", "sum"),
+            median_hours=("resolution_hours", "median"),
+            recurrence_pct=("recurrence_90d", lambda s: (s == "是").mean() * 100),
+        )
+        .reset_index()
+        .sort_values("tickets", ascending=False)
+    )
     r["root_causes"] = [
-        {"root_cause": x["root_cause_category"], "tickets": int(x["tickets"]),
-         "ticket_pct": round(x["tickets"] / len(df) * 100, 1),
-         "eng_hours": round(float(x["eng_hours"]), 1),
-         "median_hours": round(float(x["median_hours"]), 1),
-         "recurrence_pct": round(float(x["recurrence_pct"]), 1)}
+        {
+            "root_cause": x["root_cause_category"],
+            "tickets": int(x["tickets"]),
+            "ticket_pct": round(x["tickets"] / len(df) * 100, 1),
+            "eng_hours": round(float(x["eng_hours"]), 1),
+            "median_hours": round(float(x["median_hours"]), 1),
+            "recurrence_pct": round(float(x["recurrence_pct"]), 1),
+        }
         for _, x in rc.iterrows()
     ]
 
     # ---------- 7. 問題大類
-    cat = df.groupby("issue_category").agg(
-        tickets=("ticket_id", "count"),
-        eng_hours=("eng_effort_hours", "sum"),
-        median_hours=("resolution_hours", "median"),
-        median_completeness=("info_completeness_score", "median"),
-    ).reset_index().sort_values("tickets", ascending=False)
+    cat = (
+        df.groupby("issue_category")
+        .agg(
+            tickets=("ticket_id", "count"),
+            eng_hours=("eng_effort_hours", "sum"),
+            median_hours=("resolution_hours", "median"),
+            median_completeness=("info_completeness_score", "median"),
+        )
+        .reset_index()
+        .sort_values("tickets", ascending=False)
+    )
     r["issue_categories"] = [
-        {"category": x["issue_category"], "tickets": int(x["tickets"]),
-         "ticket_pct": round(x["tickets"] / len(df) * 100, 1),
-         "eng_hours": round(float(x["eng_hours"]), 1),
-         "median_hours": round(float(x["median_hours"]), 1),
-         "median_completeness": int(x["median_completeness"])}
+        {
+            "category": x["issue_category"],
+            "tickets": int(x["tickets"]),
+            "ticket_pct": round(x["tickets"] / len(df) * 100, 1),
+            "eng_hours": round(float(x["eng_hours"]), 1),
+            "median_hours": round(float(x["median_hours"]), 1),
+            "median_completeness": int(x["median_completeness"]),
+        }
         for _, x in cat.iterrows()
     ]
 
     # ---------- 8. 處理方式（判斷可自助化的比例）
     res = df["resolution_type"].value_counts()
-    r["resolution_types"] = {k: {"n": int(v), "pct": round(v / len(df) * 100, 1)}
-                             for k, v in res.items()}
+    r["resolution_types"] = {
+        k: {"n": int(v), "pct": round(v / len(df) * 100, 1)} for k, v in res.items()
+    }
     edu_none = df["resolution_type"].isin(["教育說明／文件引導", "無需處理(誤報結案)"])
     r["knowledge_solvable"] = {
         "tickets": int(edu_none.sum()),
@@ -185,11 +232,13 @@ def main() -> None:
 
     # ---------- 10. 組織情境切片
     r["by_org_context"] = {
-        k: {"tickets": int(g.shape[0]),
+        k: {
+            "tickets": int(g.shape[0]),
             "median_completeness": int(g["info_completeness_score"].median()),
             "median_clar": float(g["clarification_rounds"].median()),
             "median_hours": round(float(g["resolution_hours"].median()), 1),
-            "mean_csat": round(float(g["csat_num"].mean()), 2)}
+            "mean_csat": round(float(g["csat_num"].mean()), 2),
+        }
         for k, g in df.groupby("org_context")
     }
 
@@ -199,13 +248,17 @@ def main() -> None:
         "total_tickets": int(len(ev)),
         "pct_of_all": round(len(ev) / len(df) * 100, 1),
         "by_event": {
-            k: {"tickets": int(g.shape[0]),
+            k: {
+                "tickets": int(g.shape[0]),
                 "median_hours": round(float(g["resolution_hours"].median()), 1),
                 "median_completeness": int(g["info_completeness_score"].median()),
-                "eng_hours": round(float(g["eng_effort_hours"].sum()), 1)}
+                "eng_hours": round(float(g["eng_effort_hours"].sum()), 1),
+            }
             for k, g in ev.groupby("platform_event_id")
         },
-        "baseline_median_hours": round(float(df[df["platform_event_id"] == "—"]["resolution_hours"].median()), 1),
+        "baseline_median_hours": round(
+            float(df[df["platform_event_id"] == "—"]["resolution_hours"].median()), 1
+        ),
     }
 
     # ---------- 12. 可回收工時上限（保守估算）
@@ -235,28 +288,43 @@ def main() -> None:
     r["recoverable_hours"]["union_upper_pct"] = round(union_upper / float(total_eng) * 100, 1)
 
     # ---------- 13. 偵測器可攔截量
-    det = df[df["ai_preventable"] == "是"].groupby("detection_signal").agg(
-        tickets=("ticket_id", "count"), eng_hours=("eng_effort_hours", "sum")).reset_index()
+    det = (
+        df[df["ai_preventable"] == "是"]
+        .groupby("detection_signal")
+        .agg(tickets=("ticket_id", "count"), eng_hours=("eng_effort_hours", "sum"))
+        .reset_index()
+    )
     det = det.sort_values("tickets", ascending=False)
     r["detector_coverage"] = [
-        {"signal": x["detection_signal"], "tickets": int(x["tickets"]),
-         "ticket_pct": round(x["tickets"] / len(df) * 100, 1),
-         "eng_hours": round(float(x["eng_hours"]), 1)}
+        {
+            "signal": x["detection_signal"],
+            "tickets": int(x["tickets"]),
+            "ticket_pct": round(x["tickets"] / len(df) * 100, 1),
+            "eng_hours": round(float(x["eng_hours"]), 1),
+        }
         for _, x in det.iterrows()
     ]
 
     # ---------- 14. 月度趨勢（給 dashboard 用）
-    monthly = df.set_index("submitted_at").resample("MS").agg(
-        tickets=("ticket_id", "count"),
-        eng_hours=("eng_effort_hours", "sum"),
-        median_completeness=("info_completeness_score", "median"),
-        median_clar=("clarification_rounds", "median"),
-    ).reset_index()
+    monthly = (
+        df.set_index("submitted_at")
+        .resample("MS")
+        .agg(
+            tickets=("ticket_id", "count"),
+            eng_hours=("eng_effort_hours", "sum"),
+            median_completeness=("info_completeness_score", "median"),
+            median_clar=("clarification_rounds", "median"),
+        )
+        .reset_index()
+    )
     r["monthly"] = [
-        {"month": x["submitted_at"].strftime("%Y-%m"), "tickets": int(x["tickets"]),
-         "eng_hours": round(float(x["eng_hours"]), 1),
-         "median_completeness": int(x["median_completeness"]),
-         "median_clar": float(x["median_clar"])}
+        {
+            "month": x["submitted_at"].strftime("%Y-%m"),
+            "tickets": int(x["tickets"]),
+            "eng_hours": round(float(x["eng_hours"]), 1),
+            "median_completeness": int(x["median_completeness"]),
+            "median_clar": float(x["median_clar"]),
+        }
         for _, x in monthly.iterrows()
     ]
 
