@@ -1,4 +1,4 @@
-.PHONY: setup data xlsx analyze demo detect test lint guardrails all
+.PHONY: setup data xlsx analyze replay demo detect test lint guardrails all
 
 PY := PYTHONPATH=src python3
 
@@ -13,6 +13,9 @@ xlsx: data
 
 analyze: data
 	$(PY) -m adops_triage.analysis.baseline > /dev/null && echo "✔ reports/baseline.json"
+
+replay: data
+	$(PY) -m adops_triage.analysis.replay
 
 demo:
 	$(PY) -m adops_triage.agents.demo

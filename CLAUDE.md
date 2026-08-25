@@ -115,6 +115,7 @@ TASKS.md        開發 backlog — 不知道要做什麼就看這裡
 make setup        # 建虛擬環境並安裝依賴
 make data         # 生成 640 筆需求單 → data/raw/
 make analyze      # 跑 baseline 與 AI 機會分析，輸出到 reports/
+make replay       # 回放評測：640 筆歷史單重跑提單助理 → reports/replay.json
 make demo         # 跑提單評分 demo（L2 分診尚未實作）
 make detect       # 跑兩個偵測器原型
 make test         # 跑測試

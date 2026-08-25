@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """資料一致性測試：驗證欄位之間的因果鏈確實成立。"""
+
 import pandas as pd
 import pytest
 

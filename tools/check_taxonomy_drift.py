@@ -27,7 +27,16 @@ import yaml
 #   generate_dataset / export_xlsx / baseline —— 產生或呈現資料本身
 #   readonly.py —— 探針的 mock 回傳值（假的稽核紀錄、假的變更摘要），不是分類法
 #   demo.py —— demo 用的範例工單與客戶名，性質同 mock 資料
-EXEMPT = {"generate_dataset.py", "export_xlsx.py", "baseline.py", "readonly.py", "demo.py"}
+#   replay.py —— 與 generate_dataset 共用 MISSING_POOL 詞彙（不在 taxonomy.yaml 裡），
+#                該檔另有 import 期斷言確保兩邊詞彙完全對齊，漂移會直接炸掉
+EXEMPT = {
+    "generate_dataset.py",
+    "export_xlsx.py",
+    "baseline.py",
+    "readonly.py",
+    "demo.py",
+    "replay.py",
+}
 CJK_STRING = re.compile(r'["\']([^"\']*[一-鿿][^"\']*)["\']')
 LABEL_VALUE = re.compile(r'"label"\s*:\s*"[^"]*"')
 
