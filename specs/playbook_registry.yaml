@@ -1,0 +1,167 @@
+# 修復動作允許清單（Playbook Registry）
+#
+# 這是整個系統最重要的安全設計：
+#   Remediation Agent 只能從這份清單挑動作，不得生成清單以外的新動作。
+#   任何新增動作都必須在這裡註冊 risk_tier / reversible / rollback，才允許被引用。
+#
+# risk_tier 對應 specs/taxonomy.yaml#risk_tiers：
+#   low    → 自動執行，有每日次數上限
+#   medium → 需 Slack 單人核准
+#   high   → recommendation_only，永遠不執行
+
+version: "1.0.0"
+
+actions:
+
+  # ---------------- 低風險：可逆、可自動執行 ----------------
+  - id: feed.repush
+    label: 重新推送商品 Feed
+    risk_tier: low
+    reversible: true
+    preconditions:
+      - 上次推送距今 > 30 分鐘
+      - 該 catalog 無進行中的推送任務
+    handles_root_causes: [UPSTREAM, THIRD, INFRA]
+    rollback: 無需回滾（推送為冪等操作）
+    verification: probe_feed_vs_landing 差異數歸零
+    daily_cap: 20
+
+  - id: pipeline.retry_failed_task
+    label: 重試失敗的排程任務
+    risk_tier: low
+    reversible: true
+    preconditions:
+      - 失敗次數 < 3
+      - 非資料寫入類任務
+    handles_root_causes: [INFRA, THIRD]
+    rollback: 無需回滾
+    verification: 任務狀態轉為 success
+    daily_cap: 30
+
+  - id: audience.refresh_sync
+    label: 觸發自訂受眾重新同步
+    risk_tier: low
+    reversible: true
+    preconditions:
+      - 來源名單筆數 > 0
+      - 距上次同步 > 1 小時
+    handles_root_causes: [UPSTREAM, THIRD]
+    rollback: 受眾維持前一版本
+    verification: 受眾規模回到 7 日均值 ±15% 內
+    daily_cap: 10
+
+  - id: token.rotate_with_stored_refresh
+    label: 以既有 refresh token 換發新 access token
+    risk_tier: low
+    reversible: true
+    preconditions:
+      - refresh token 未過期
+      - 帳號未被停用
+    handles_root_causes: [AUTH]
+    rollback: 保留舊 token 至新 token 驗證通過
+    verification: probe_token_status 回傳 healthy
+    daily_cap: 20
+
+  - id: report.rerun_scheduled_job
+    label: 重跑報表排程
+    risk_tier: low
+    reversible: true
+    preconditions: [報表非人工編輯狀態]
+    handles_root_causes: [INFRA, THIRD]
+    rollback: 保留前一版報表快照
+    verification: 報表更新時間為當日
+    daily_cap: 20
+
+  # ---------------- 中風險：需單人核准 ----------------
+  - id: gtm.publish_reverted_version
+    label: 將 GTM 容器回退到指定的前一版本
+    risk_tier: medium
+    reversible: true
+    preconditions:
+      - 目標版本存在且曾成功運行 > 7 天
+      - 已通知客戶端窗口
+    handles_root_causes: [GTM]
+    rollback: 再次發布回當前版本
+    verification: probe_pixel_events 事件量回到基準
+    approval: single_human_approval
+
+  - id: capi.adjust_dedup_key
+    label: 調整 CAPI 去重鍵（event_id 生成邏輯）
+    risk_tier: medium
+    reversible: true
+    preconditions: [已在測試環境驗證去重結果]
+    handles_root_causes: [GTM, BUG, DATA]
+    rollback: 還原前一版 event_id 邏輯
+    verification: 24h 內重複事件比例 < 2%
+    approval: single_human_approval
+
+  - id: feed.apply_field_mapping_fix
+    label: 套用 Feed 欄位對應修正（幣別／運費／GTIN）
+    risk_tier: medium
+    reversible: true
+    preconditions: [已在 draft feed 驗證通過]
+    handles_root_causes: [DATA, UPSTREAM, USER]
+    rollback: 還原前一版 mapping
+    verification: 拒登商品數下降且無新增拒登原因
+    approval: single_human_approval
+
+  - id: consent.update_cmp_mapping
+    label: 更新 CMP 同意類別與 Consent Mode 參數對應
+    risk_tier: medium
+    reversible: true
+    preconditions: [已完成 Network tab gcs/gcd 參數驗證]
+    handles_root_causes: [POLICY, GTM, FE]
+    rollback: 還原前一版 CMP 設定
+    verification: 同意/拒絕兩種情境下 gcs 參數確實改變
+    approval: single_human_approval
+
+  # ---------------- 高風險：永遠只建議，不執行 ----------------
+  - id: campaign.adjust_budget
+    label: 調整廣告預算
+    risk_tier: high
+    reversible: false
+    handles_root_causes: []
+    rationale: 動客戶預算屬商業決策，不在支援系統守備範圍
+    approval: recommendation_only
+
+  - id: campaign.adjust_bid_strategy
+    label: 變更出價策略
+    risk_tier: high
+    reversible: false
+    handles_root_causes: []
+    rationale: 影響學習期與成效，需投手判斷
+    approval: recommendation_only
+
+  - id: audience.delete
+    label: 刪除自訂受眾
+    risk_tier: high
+    reversible: false
+    handles_root_causes: []
+    rationale: 不可逆且會中斷投放
+    approval: recommendation_only
+
+  - id: schema.alter_event_schema
+    label: 變更事件 schema 或欄位定義
+    risk_tier: high
+    reversible: false
+    handles_root_causes: []
+    rationale: 影響歷史資料可比性，需走正式變更流程
+    approval: recommendation_only
+
+  - id: account.change_asset_ownership
+    label: 變更資產歸屬或 BM 權限
+    risk_tier: high
+    reversible: false
+    handles_root_causes: []
+    rationale: 涉及帳號安全與合約關係
+    approval: recommendation_only
+
+# 全域護欄
+global_guards:
+  audit_log_required: true          # 每個動作都要寫入不可竄改的稽核紀錄
+  redact_pii_before_llm: true       # 進 LLM 前遮蔽個資
+  blast_radius_cap_ntd: 500000      # 影響金額超過此值一律升級為人工決策
+  soak_period_hours:
+    low: 2
+    medium: 12
+    high: 24

@@ -1,0 +1,37 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        options: [staging, prod]
+      canary_percent:
+        type: string
+        default: "10"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}   # prod 需人核准（GitHub Environment protection）
+    permissions: { id-token: write, contents: read }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 建置映像檔並產生 SBOM
+        run: make image SBOM=1
+
+      - name: Terraform apply
+        run: terraform -chdir=infra apply -auto-approve -var-file=envs/${{ inputs.environment }}.tfvars
+
+      - name: 部署（灰度）
+        run: ./scripts/deploy.sh --env ${{ inputs.environment }} --canary ${{ inputs.canary_percent }}
+
+      - name: Smoke test
+        run: ./scripts/smoke.sh --env ${{ inputs.environment }}
+
+      - name: Soak 監控
+        # 監控四項回滾觸發條件：
+        #   分類準確率跌破基線 5% / abstain 率異常上升 /
+        #   誤執行計數 > 0 / 單位工單 token 成本超出預算 30%
+        run: ./scripts/soak.sh --env ${{ inputs.environment }} --minutes 30 --auto-rollback

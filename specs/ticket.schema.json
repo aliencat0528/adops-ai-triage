@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aliencatuniverse.tw/schemas/adops-ticket/1.0.0",
+  "title": "廣告支援工程需求單",
+  "description": "50 欄位需求單。必填欄位隨 issue_category 動態變更，見 allOf 區塊。",
+  "type": "object",
+
+  "properties": {
+    "ticket_id":            { "type": "string", "pattern": "^REQ-\\d{6}-\\d{4}$", "x-group": "A 工單識別" },
+    "submitted_at":         { "type": "string", "format": "date-time", "x-group": "A 工單識別" },
+    "org_context":          { "type": "string", "enum": ["廣告代理商內部RD支援", "MarTech SaaS客戶技術支援", "電商品牌in-house團隊"], "x-group": "A 工單識別" },
+    "requester_name":       { "type": "string", "x-group": "A 工單識別" },
+    "requester_role":       { "type": "string", "x-group": "A 工單識別" },
+
+    "client_brand":         { "type": "string", "x-group": "B 客戶脈絡" },
+    "industry":             { "type": "string", "x-group": "B 客戶脈絡" },
+    "sla_tier":             { "type": "string", "x-group": "B 客戶脈絡" },
+    "website_platform":     { "type": "string", "x-group": "B 客戶脈絡" },
+
+    "issue_category":       { "type": "string", "x-group": "C 問題描述", "x-source": "specs/taxonomy.yaml#issue_taxonomy" },
+    "issue_subcategory":    { "type": "string", "x-group": "C 問題描述" },
+    "title":                { "type": "string", "maxLength": 120, "x-group": "C 問題描述" },
+    "description":          { "type": "string", "minLength": 10, "x-group": "C 問題描述" },
+    "platform":             { "type": "string", "x-group": "C 問題描述" },
+    "affected_asset_id":    { "type": "string", "x-group": "C 問題描述" },
+
+    "tracking_method":      { "type": "string", "enum": ["Client-side (JS/Pixel)", "Server-side (CAPI/MP)", "Hybrid (雙軌+dedup)", "Feed/Catalog 排程", "API 直連", "SDK (App)"], "x-group": "D 技術上下文" },
+    "environment":          { "type": "string", "x-group": "D 技術上下文" },
+    "reproducible":         { "type": "string", "enum": ["可穩定重現", "偶發/間歇", "無法重現", "未測試"], "x-group": "D 技術上下文" },
+    "occurred_from":        { "type": "string", "format": "date", "x-group": "D 技術上下文" },
+
+    "severity":             { "type": "string", "x-group": "E 影響量化" },
+    "priority":             { "type": "string", "x-group": "E 影響量化" },
+    "impacted_spend_daily_ntd": { "type": "integer", "minimum": 0, "x-group": "E 影響量化" },
+    "impacted_campaign_count":  { "type": "integer", "minimum": 0, "x-group": "E 影響量化" },
+    "metric_name":          { "type": "string", "x-group": "E 影響量化" },
+    "metric_before":        { "type": "number", "x-group": "E 影響量化" },
+    "metric_after":         { "type": "number", "x-group": "E 影響量化" },
+    "delta_pct":            { "type": "number", "x-group": "E 影響量化" },
+    "business_impact":      { "type": "string", "x-group": "E 影響量化" },
+
+    "attachment_count":     { "type": "integer", "minimum": 0, "x-group": "F 提單品質" },
+    "info_completeness_score": { "type": "integer", "minimum": 0, "maximum": 100, "x-group": "F 提單品質", "x-computed-by": "agents/intake.py" },
+    "missing_fields":       { "type": "string", "x-group": "F 提單品質", "x-computed-by": "agents/intake.py" },
+    "first_response_min":   { "type": "integer", "minimum": 0, "x-group": "F 提單品質" },
+    "clarification_rounds": { "type": "integer", "minimum": 0, "x-group": "F 提單品質", "x-note": "全案最關鍵的成本放大器" },
+    "is_duplicate":         { "type": "string", "enum": ["是", "否"], "x-group": "F 提單品質" },
+    "duplicate_of":         { "type": "string", "x-group": "F 提單品質" },
+
+    "assigned_team":        { "type": "string", "x-group": "G 處理與根因" },
+    "assignee":             { "type": "string", "x-group": "G 處理與根因" },
+    "root_cause_category":  { "type": "string", "x-group": "G 處理與根因", "x-source": "specs/taxonomy.yaml#root_causes" },
+    "resolution_type":      { "type": "string", "x-group": "G 處理與根因", "x-source": "specs/taxonomy.yaml#resolution_types" },
+    "fix_owner":            { "type": "string", "x-group": "G 處理與根因" },
+    "status":               { "type": "string", "enum": ["已結案", "處理中", "待客戶回覆", "待平台原廠回覆", "已擱置"], "x-group": "G 處理與根因" },
+    "resolved_at":          { "type": ["string", "null"], "x-group": "G 處理與根因" },
+    "resolution_hours":     { "type": "number", "minimum": 0, "x-group": "G 處理與根因" },
+    "eng_effort_hours":     { "type": "number", "minimum": 0, "x-group": "G 處理與根因" },
+    "reopened_count":       { "type": "integer", "minimum": 0, "x-group": "G 處理與根因" },
+    "recurrence_90d":       { "type": "string", "enum": ["是", "否"], "x-group": "G 處理與根因" },
+    "csat":                 { "type": ["number", "null"], "minimum": 1, "maximum": 5, "x-group": "G 處理與根因" },
+
+    "ai_automation_level":  { "type": "string", "x-group": "H AI 標註", "x-source": "specs/taxonomy.yaml#ai_automation_levels" },
+    "ai_preventable":       { "type": "string", "enum": ["是", "部分", "否"], "x-group": "H AI 標註" },
+    "detection_signal":     { "type": "string", "x-group": "H AI 標註" },
+    "kb_article_id":        { "type": "string", "x-group": "H AI 標註" }
+  },
+
+  "required": [
+    "ticket_id", "submitted_at", "org_context", "requester_name",
+    "client_brand", "issue_category", "title", "description", "platform", "severity"
+  ],
+
+  "allOf": [
+    {
+      "$comment": "動態必填規則 1：事件追蹤異常 — 沒有資產ID與時間區間，診斷探針無法執行",
+      "if":   { "properties": { "issue_category": { "const": "事件追蹤異常" } } },
+      "then": { "required": ["affected_asset_id", "occurred_from", "tracking_method", "reproducible", "environment"] }
+    },
+    {
+      "$comment": "動態必填規則 2：Feed 問題 — 沒有 catalog id 與商品樣本，無法比對到達頁",
+      "if":   { "properties": { "issue_category": { "const": "商品資訊與Feed" } } },
+      "then": { "required": ["affected_asset_id", "occurred_from", "impacted_campaign_count", "website_platform"] }
+    },
+    {
+      "$comment": "動態必填規則 3：受眾與媒合 — 需前後數值才能判斷是驟降還是自然衰減",
+      "if":   { "properties": { "issue_category": { "const": "受眾與媒合" } } },
+      "then": { "required": ["affected_asset_id", "metric_name", "metric_before", "metric_after", "occurred_from"] }
+    },
+    {
+      "$comment": "動態必填規則 4：歸因與報表 — 沒有對照來源就只是主觀感覺",
+      "if":   { "properties": { "issue_category": { "const": "歸因與報表" } } },
+      "then": { "required": ["metric_name", "metric_before", "metric_after", "occurred_from"] }
+    },
+    {
+      "$comment": "動態必填規則 5：API與整合 — 沒有錯誤訊息全文等於沒開單",
+      "if":   { "properties": { "issue_category": { "const": "API與整合" } } },
+      "then": { "required": ["affected_asset_id", "environment", "occurred_from", "reproducible"] }
+    },
+    {
+      "$comment": "護欄：S1/S2 高嚴重度必須量化影響，否則無法排序",
+      "if":   { "properties": { "severity": { "pattern": "^S[12]" } } },
+      "then": { "required": ["impacted_spend_daily_ntd", "impacted_campaign_count", "business_impact"] }
+    }
+  ],
+
+  "x-completeness-weights": {
+    "$comment": "agents/intake.py 用這組權重計算 0-100 完整度分數。權重依「缺了會讓診斷無法進行」的程度分配。",
+    "affected_asset_id": 18,
+    "occurred_from": 15,
+    "description": 12,
+    "metric_before": 8,
+    "metric_after": 8,
+    "reproducible": 8,
+    "tracking_method": 7,
+    "environment": 6,
+    "impacted_campaign_count": 6,
+    "attachment_count": 6,
+    "website_platform": 3,
+    "business_impact": 3
+  },
+
+  "x-submission-guards": {
+    "min_completeness_to_submit": 40,
+    "p0_override_allowed": true,
+    "p0_override_flag": "高風險急件-資訊不全",
+    "max_clarification_rounds": 3,
+    "max_questions_per_round": 2
+  }
+}

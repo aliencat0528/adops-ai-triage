@@ -1,0 +1,324 @@
+  <figure class="master">
+    <svg viewBox="0 0 1320 1046" role="img" aria-label="AdOps AI Triage 整體流程架構圖：由左至右為異常發生、L0 偵測、L1 提單助理、L2 分診、L3 診斷、人決策與 L4 執行、L5 驗證與 L6 學習；上方為外部來源與商品資料管線，下方依序為資料平面、Dashboard 三層與控制平面；橘色為預防路徑，灰色為工單路徑">
+      <defs>
+        <marker id="m-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="currentColor"/></marker>
+        <marker id="m-o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#B84A16"/></marker>
+        <marker id="m-as" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M10,1 L1,5 L10,9 z" fill="currentColor"/></marker>
+      </defs>
+
+      <!-- ════════ 泳道底色與標籤 ════════ -->
+      <g opacity="0.032" fill="currentColor">
+        <rect x="8" y="60" width="1304" height="128"/>
+        <rect x="8" y="298" width="1304" height="114"/>
+        <rect x="8" y="520" width="1304" height="136"/>
+        <rect x="8" y="792" width="1304" height="104"/>
+      </g>
+      <g font-family="Noto Sans TC, sans-serif" font-size="12" font-weight="700" fill="currentColor" opacity="0.72">
+        <text x="14" y="112">來源與產線</text>
+        <text x="14" y="236">L0 感知</text>
+        <text x="14" y="342">AI 唯讀處理</text>
+        <text x="14" y="462">人</text>
+        <text x="14" y="574">寫入與學習</text>
+        <text x="14" y="722">資料平面</text>
+        <text x="14" y="838">Dashboard</text>
+        <text x="14" y="952">控制平面</text>
+      </g>
+      <g font-family="IBM Plex Mono, monospace" font-size="9" fill="currentColor" opacity="0.42">
+        <text x="14" y="128">SOURCE</text>
+        <text x="14" y="252">DETECT</text>
+        <text x="14" y="358">L1–L3 · READ ONLY</text>
+        <text x="14" y="478">HUMAN</text>
+        <text x="14" y="590">L4–L6 · WRITES</text>
+        <text x="14" y="738">DATA</text>
+        <text x="14" y="854">OBSERVE</text>
+        <text x="14" y="968">CONTROL</text>
+      </g>
+
+      <!-- ════════ 階段刻度 ════════ -->
+      <g font-family="IBM Plex Mono, monospace" font-size="9.5" fill="currentColor" opacity="0.45" text-anchor="middle">
+        <text x="191" y="44">① 異常發生</text>
+        <text x="450" y="44">② 偵測與分流</text>
+        <text x="800" y="44">③ 收單 · 分診 · 診斷</text>
+        <text x="1051" y="44">④ 決策與執行</text>
+        <text x="1223" y="44">⑤ 驗證與學習</text>
+      </g>
+      <g stroke="currentColor" opacity="0.16">
+        <line x1="116" y1="54" x2="1298" y2="54"/>
+        <line x1="277" y1="50" x2="277" y2="58"/>
+        <line x1="622" y1="50" x2="622" y2="58"/>
+        <line x1="965" y1="50" x2="965" y2="58"/>
+        <line x1="1137" y1="50" x2="1137" y2="58"/>
+      </g>
+
+      <!-- ════════ 泳道 1：來源與產線 ════════ -->
+      <rect x="116" y="72" width="150" height="102" fill="currentColor" opacity="0.1"/>
+      <text x="191" y="96" font-family="Noto Sans TC, sans-serif" font-size="13" font-weight="700" fill="currentColor" text-anchor="middle">異常發生</text>
+      <g font-family="Noto Sans TC, sans-serif" font-size="10" fill="currentColor" opacity="0.72" text-anchor="middle">
+        <text x="191" y="116">客戶網站改版</text>
+        <text x="191" y="131">平台 API 變更</text>
+        <text x="191" y="146">ERP 同步延遲</text>
+        <text x="191" y="161">憑證到期</text>
+      </g>
+
+      <rect x="288" y="72" width="666" height="102" fill="currentColor" opacity="0.07" stroke="currentColor" stroke-opacity="0.22"/>
+      <text x="300" y="92" font-family="Noto Sans TC, sans-serif" font-size="12.5" font-weight="700" fill="currentColor">商品資料管線</text>
+      <text x="406" y="92" font-family="IBM Plex Mono, monospace" font-size="9.5" fill="currentColor" opacity="0.5">把人為爬資料與產 feed 自動化</text>
+      <g>
+        <rect x="300" y="104" width="98" height="30" fill="currentColor" opacity="0.09"/>
+        <rect x="410" y="104" width="98" height="30" fill="currentColor" opacity="0.09"/>
+        <rect x="520" y="104" width="98" height="30" fill="currentColor" opacity="0.09"/>
+        <rect x="630" y="104" width="98" height="30" fill="#B84A16" opacity="0.16"/>
+        <rect x="740" y="104" width="98" height="30" fill="currentColor" opacity="0.09"/>
+        <rect x="850" y="104" width="92" height="30" fill="currentColor" opacity="0.09"/>
+      </g>
+      <g font-family="Noto Sans TC, sans-serif" font-size="11" font-weight="700" fill="currentColor" text-anchor="middle">
+        <text x="349" y="124">爬取</text><text x="459" y="124">抽取</text><text x="569" y="124">正規化</text>
+        <text x="679" y="124">品質檢核</text><text x="789" y="124">Feed 產製</text><text x="896" y="124">多平台適配</text>
+      </g>
+      <g stroke="currentColor" stroke-opacity="0.4" stroke-width="1.2" marker-end="url(#m-a)">
+        <line x1="400" y1="119" x2="408" y2="119"/><line x1="510" y1="119" x2="518" y2="119"/>
+        <line x1="620" y1="119" x2="628" y2="119"/><line x1="730" y1="119" x2="738" y2="119"/>
+        <line x1="840" y1="119" x2="848" y2="119"/>
+      </g>
+      <g font-family="Noto Sans TC, sans-serif" font-size="9.5" fill="currentColor" opacity="0.62" text-anchor="middle">
+        <text x="349" y="150">結構自動判讀</text>
+        <text x="459" y="150">JSON-LD 優先</text>
+        <text x="569" y="150">品類對映與合併</text>
+        <text x="679" y="150">價格異常偵測</text>
+        <text x="789" y="150">文案改寫</text>
+        <text x="896" y="150">拒登原因回讀</text>
+      </g>
+      <g font-family="Noto Sans TC, sans-serif" font-size="8.5" fill="currentColor" opacity="0.45" text-anchor="middle">
+        <text x="459" y="163">selector 失效自動重新定位</text>
+        <text x="789" y="163">差異更新，只推變動商品</text>
+      </g>
+      <text x="679" y="163" font-family="Noto Sans TC, sans-serif" font-size="8.5" fill="#B84A16" text-anchor="middle">↙ 成為 Feed 健檢訊號源</text>
+
+      <!-- ════════ 泳道 2：L0 感知 ════════ -->
+      <rect x="116" y="202" width="322" height="76" fill="currentColor" opacity="0.1"/>
+      <rect x="116" y="202" width="4" height="76" fill="#B84A16"/>
+      <text x="132" y="223" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="600" fill="#B84A16">L0</text>
+      <text x="164" y="223" font-family="Noto Sans TC, sans-serif" font-size="13" font-weight="700" fill="currentColor">六個主動偵測器</text>
+      <g font-family="Noto Sans TC, sans-serif" font-size="10" fill="currentColor" opacity="0.75">
+        <text x="132" y="243">Tag 巡檢 · Feed 健檢 · Changelog 監控</text>
+        <text x="132" y="259">憑證預警 · GTM 哨兵 · 跨源對帳</text>
+        <text x="132" y="274" font-size="9.5" fill="#B84A16">攔下 48.9% 的工單</text>
+      </g>
+
+      <rect x="460" y="202" width="150" height="76" fill="#B84A16" opacity="0.13"/>
+      <text x="535" y="224" font-family="Noto Sans TC, sans-serif" font-size="13" font-weight="700" fill="currentColor" text-anchor="middle">風險判定</text>
+      <g font-family="Noto Sans TC, sans-serif" font-size="10" fill="currentColor" opacity="0.75" text-anchor="middle">
+        <text x="535" y="243">可逆嗎？誰承擔？</text>
+        <text x="535" y="258">錯了看得出來嗎？</text>
+        <text x="535" y="273">影響金額上限</text>
+      </g>
+
+      <!-- 預防路徑：風險判定 → L4 -->
+      <path d="M 612 240 L 1051 240 L 1051 516" fill="none" stroke="#B84A16" stroke-width="2" marker-end="url(#m-o)"/>
+      <rect x="700" y="230" width="264" height="18" fill="var(--paper)"/>
+      <text x="832" y="243" font-family="Noto Sans TC, sans-serif" font-size="10.5" font-weight="700" fill="#B84A16" text-anchor="middle">低風險可逆 → 直接自動處置，不開單</text>
+
+      <!-- ════════ 泳道 3：AI 唯讀 L1–L3 ════════ -->
+      <g>
+        <rect x="460" y="306" width="150" height="98" fill="#B84A16" opacity="0.1"/>
+        <rect x="632" y="306" width="150" height="98" fill="currentColor" opacity="0.08"/>
+        <rect x="804" y="306" width="150" height="98" fill="currentColor" opacity="0.08"/>
+      </g>
+      <g font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#B84A16">
+        <text x="472" y="326">L1</text><text x="644" y="326">L2</text><text x="816" y="326">L3</text>
+      </g>
+      <g font-family="Noto Sans TC, sans-serif" font-size="13" font-weight="700" fill="currentColor">
+        <text x="498" y="326">提單助理</text><text x="670" y="326">分診路由</text><text x="842" y="326">唯讀探針診斷</text>
+      </g>
+      <g font-family="Noto Sans TC, sans-serif" font-size="10" fill="currentColor" opacity="0.75">
+        <text x="472" y="346">對話式收單</text><text x="472" y="361">完整度評分 · 自動補件</text>
+        <text x="472" y="376">追問上限 3 輪</text><text x="472" y="394" fill="#B84A16" font-size="9.5">釐清 2.27 次 → 0</text>
+        <text x="644" y="346">規則優先，未命中才用 LLM</text><text x="644" y="361">相似單檢索 · 影響面計算</text>
+        <text x="644" y="376">重複單合併</text><text x="644" y="394" font-size="9.5" opacity="0.8">分類錯 = 轉一次單</text>
+        <text x="816" y="346">七支唯讀探針 · ReAct</text><text x="816" y="361">Top-3 根因假設</text>
+        <text x="816" y="376">附證據與信心分數</text><text x="816" y="394" font-size="9.5" opacity="0.8">只提供，不下結論</text>
+      </g>
+      <g stroke="currentColor" stroke-opacity="0.5" stroke-width="1.6" marker-end="url(#m-a)">
+        <line x1="612" y1="355" x2="628" y2="355"/>
+        <line x1="784" y1="355" x2="800" y2="355"/>
+      </g>
+      <!-- L2 知識庫可答 → 直接結案 -->
+      <path d="M 707 406 L 707 418 L 1223 418 L 1223 524" fill="none" stroke="currentColor" stroke-opacity="0.42" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#m-a)"/>
+      <rect x="800" y="410" width="230" height="15" fill="var(--paper)"/>
+      <text x="915" y="422" font-family="Noto Sans TC, sans-serif" font-size="9.5" fill="currentColor" opacity="0.75" text-anchor="middle">知識庫可答 32.7% → 附引用直接結案</text>
+
+      <!-- ════════ 泳道 4：人 ════════ -->
+      <rect x="288" y="432" width="150" height="66" fill="currentColor" opacity="0.09" stroke="currentColor" stroke-opacity="0.28"/>
+      <text x="363" y="454" font-family="Noto Sans TC, sans-serif" font-size="13" font-weight="700" fill="currentColor" text-anchor="middle">投手 / AM 發現</text>
+      <g font-family="Noto Sans TC, sans-serif" font-size="10" fill="currentColor" opacity="0.75" text-anchor="middle">
+        <text x="363" y="473">口語描述，資訊通常不足</text>
+        <text x="363" y="488">通常已經在賠錢</text>
+      </g>
+
+      <rect x="976" y="432" width="150" height="66" fill="currentColor" opacity="0.13" stroke="currentColor" stroke-opacity="0.35"/>
+      <text x="1051" y="454" font-family="Noto Sans TC, sans-serif" font-size="13" font-weight="700" fill="currentColor" text-anchor="middle">工程師決策</text>
+      <g font-family="Noto Sans TC, sans-serif" font-size="10" fill="currentColor" opacity="0.75" text-anchor="middle">
+        <text x="1051" y="473">看證據做判斷</text>
+        <text x="1051" y="488">不是按核准鍵</text>
+      </g>
+
+      <!-- ════════ 唯讀 / 寫入 邊界 ════════ -->
+      <line x1="116" y1="510" x2="1298" y2="510" stroke="#B84A16" stroke-width="1.6" stroke-dasharray="6 4"/>
+      <rect x="420" y="501" width="360" height="18" fill="var(--paper)"/>
+      <text x="600" y="515" font-family="IBM Plex Mono, monospace" font-size="10.5" font-weight="600" fill="#B84A16" text-anchor="middle">以上唯讀，錯了最多是誤報 ── 以下會寫入</text>
+
+      <!-- ════════ 泳道 5：寫入與學習 L4–L6 ════════ -->
+      <rect x="976" y="528" width="150" height="118" fill="#B84A16" opacity="0.12"/>
+      <rect x="976" y="528" width="4" height="118" fill="#B84A16"/>
+      <text x="990" y="549" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#B84A16">L4</text>
+      <text x="1016" y="549" font-family="Noto Sans TC, sans-serif" font-size="13" font-weight="700" fill="currentColor">受控執行</text>
+      <g font-family="Noto Sans TC, sans-serif" font-size="10" fill="currentColor" opacity="0.8">
+        <text x="990" y="567">動作只能來自允許清單</text>
+        <text x="990" y="584" fill="#2C6E52">低風險 → 自動，有每日上限</text>
+        <text x="990" y="601">中風險 → Slack 單人核准</text>
+        <text x="990" y="618" font-weight="700" fill="#B84A16">高風險 → 永遠只建議</text>
+        <text x="990" y="634" font-size="9" opacity="0.7">動預算 · 出價 · 刪受眾 · 改 schema</text>
+      </g>
+
+      <rect x="1148" y="528" width="150" height="54" fill="currentColor" opacity="0.08"/>
+      <text x="1160" y="548" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="currentColor" opacity="0.75">L5</text>
+      <text x="1186" y="548" font-family="Noto Sans TC, sans-serif" font-size="13" font-weight="700" fill="currentColor">驗證</text>
+      <g font-family="Noto Sans TC, sans-serif" font-size="10" fill="currentColor" opacity="0.75">
+        <text x="1160" y="565">重跑原始檢測 · soak 期</text>
+        <text x="1160" y="578">未通過自動退回 L3</text>
+      </g>
+
+      <rect x="1148" y="592" width="150" height="54" fill="currentColor" opacity="0.1"/>
+      <rect x="1148" y="592" width="4" height="54" fill="#B84A16"/>
+      <text x="1162" y="612" font-family="IBM Plex Mono, monospace" font-size="11" font-weight="600" fill="#B84A16">L6</text>
+      <text x="1188" y="612" font-family="Noto Sans TC, sans-serif" font-size="13" font-weight="700" fill="currentColor">學習</text>
+      <g font-family="Noto Sans TC, sans-serif" font-size="10" fill="currentColor" opacity="0.75">
+        <text x="1160" y="629">結案回寫知識庫（人審）</text>
+        <text x="1160" y="642">根因聚類 · 提案新偵測器</text>
+      </g>
+      <g stroke="currentColor" stroke-opacity="0.5" stroke-width="1.6" marker-end="url(#m-a)">
+        <line x1="1128" y1="555" x2="1144" y2="555"/>
+      </g>
+      <line x1="1223" y1="584" x2="1223" y2="590" stroke="currentColor" stroke-opacity="0.5" stroke-width="1.4" marker-end="url(#m-a)"/>
+
+      <!-- ════════ 主要流向箭頭 ════════ -->
+      <!-- 異常 → L0 -->
+      <path d="M 191 176 L 191 198" fill="none" stroke="#B84A16" stroke-width="1.8" marker-end="url(#m-o)"/>
+      <!-- 異常 → 人發現 -->
+      <path d="M 216 176 C 250 176, 250 428, 286 428" fill="none" stroke="currentColor" stroke-opacity="0.45" stroke-width="1.6" marker-end="url(#m-a)"/>
+      <rect x="232" y="356" width="52" height="15" fill="var(--paper)"/>
+      <text x="258" y="368" font-family="Noto Sans TC, sans-serif" font-size="9.5" fill="currentColor" opacity="0.62" text-anchor="middle">沒被攔到</text>
+      <!-- 管線品質檢核 → L0（Feed 健檢的訊號源） -->
+      <path d="M 640 172 C 600 198, 520 200, 442 202" fill="none" stroke="#B84A16" stroke-width="1.5" marker-end="url(#m-o)"/>
+      <!-- L0 → 風險判定 -->
+      <line x1="440" y1="240" x2="456" y2="240" stroke="#B84A16" stroke-width="1.8" marker-end="url(#m-o)"/>
+      <!-- 人發現 → L1 -->
+      <path d="M 440 452 C 452 452, 452 372, 456 358" fill="none" stroke="currentColor" stroke-opacity="0.5" stroke-width="1.6" marker-end="url(#m-a)"/>
+      <!-- L3 → 工程師決策 -->
+      <path d="M 956 358 C 968 358, 968 440, 972 448" fill="none" stroke="currentColor" stroke-opacity="0.5" stroke-width="1.6" marker-end="url(#m-a)"/>
+      <!-- 工程師 → L4 -->
+      <line x1="1051" y1="500" x2="1051" y2="524" stroke="currentColor" stroke-opacity="0.5" stroke-width="1.8" marker-end="url(#m-a)"/>
+      <!-- L6 → L0 學習迴圈（走管線與 L0 之間的空隙，不穿過任何方框） -->
+      <path d="M 1298 619 L 1312 619 L 1312 186 L 300 186 L 300 197" fill="none" stroke="#B84A16" stroke-width="1.6" stroke-dasharray="5 4" marker-end="url(#m-o)"/>
+      <rect x="720" y="178" width="290" height="15" fill="var(--paper)"/>
+      <text x="865" y="190" font-family="Noto Sans TC, sans-serif" font-size="9.5" fill="#B84A16" text-anchor="middle">L6 學到的規則回饋成 L0 新偵測器</text>
+
+      <!-- ════════ 資料平面 ════════ -->
+      <rect x="116" y="672" width="1182" height="90" fill="currentColor" opacity="0.04" stroke="currentColor" stroke-opacity="0.2"/>
+      <g>
+        <rect x="132" y="690" width="216" height="54" fill="currentColor" opacity="0.08"/>
+        <rect x="360" y="690" width="216" height="54" fill="currentColor" opacity="0.08"/>
+        <rect x="588" y="690" width="228" height="54" fill="currentColor" opacity="0.08"/>
+        <rect x="828" y="690" width="216" height="54" fill="currentColor" opacity="0.08"/>
+        <rect x="1056" y="690" width="226" height="54" fill="currentColor" opacity="0.08"/>
+      </g>
+      <g font-family="Noto Sans TC, sans-serif" font-size="12" font-weight="700" fill="currentColor" text-anchor="middle">
+        <text x="240" y="712">原始快照</text><text x="468" y="712">工單資料庫</text><text x="702" y="712">知識庫向量索引</text>
+        <text x="936" y="712">指標彙總表</text><text x="1169" y="712">稽核 log</text>
+      </g>
+      <g font-family="IBM Plex Mono, monospace" font-size="9.5" fill="currentColor" opacity="0.55" text-anchor="middle">
+        <text x="240" y="730">immutable · 分區 · 可回溯</text>
+        <text x="468" y="730">狀態機 + 釐清對話</text>
+        <text x="702" y="730">hybrid retrieval · 人審後生效</text>
+        <text x="936" y="730">KPI 樹 · baseline.json</text>
+        <text x="1169" y="730">append-only · 不可竄改</text>
+      </g>
+      <g stroke="currentColor" stroke-opacity="0.35" stroke-width="1.3" marker-end="url(#m-a)" marker-start="url(#m-as)">
+        <line x1="535" y1="410" x2="535" y2="686"/>
+        <line x1="879" y1="410" x2="879" y2="686"/>
+        <line x1="1051" y1="650" x2="1051" y2="686"/>
+        <line x1="1223" y1="650" x2="1223" y2="686"/>
+      </g>
+      <text x="132" y="757" font-family="Noto Sans TC, sans-serif" font-size="9.5" fill="#B84A16">個資遮蔽閘門：任何資料進入 LLM 之前，email、電話、雜湊識別碼都必須先遮蔽</text>
+
+      <!-- ════════ Dashboard ════════ -->
+      <g>
+        <rect x="132" y="800" width="376" height="80" fill="currentColor" opacity="0.07"/>
+        <rect x="524" y="800" width="376" height="80" fill="currentColor" opacity="0.07"/>
+        <rect x="916" y="800" width="366" height="80" fill="#B84A16" opacity="0.1"/>
+      </g>
+      <g font-family="Noto Sans TC, sans-serif" font-size="12.5" font-weight="700" fill="currentColor">
+        <text x="146" y="822">戰情層</text><text x="538" y="822">診斷層</text><text x="930" y="822">治理層</text>
+      </g>
+      <g font-family="IBM Plex Mono, monospace" font-size="9.5" fill="currentColor" opacity="0.5">
+        <text x="200" y="822">Now · 值班工程師</text><text x="592" y="822">Why · 處理工程師</text><text x="984" y="822">Trend · 團隊主管</text>
+      </g>
+      <g font-family="Noto Sans TC, sans-serif" font-size="10" fill="currentColor" opacity="0.78">
+        <text x="146" y="842">待核准動作佇列 · 偵測器告警 · soak 期監控中</text>
+        <text x="146" y="858">影子佇列：被 AI 擋下或降級的單，每日人工掃描</text>
+        <text x="146" y="874" font-size="9.5" opacity="0.7">觀察 ① ② ⑥ 階段</text>
+        <text x="538" y="842">單一工單的完整證據鏈：探針原始輸出不做二次加工</text>
+        <text x="538" y="858">Top-3 根因假設 + 信心分數 + 相似歷史單</text>
+        <text x="538" y="874" font-size="9.5" opacity="0.7">觀察 ③ ④ ⑤ 階段</text>
+        <text x="930" y="842">KPI 樹趨勢 · 核准通過率（假護欄偵測）</text>
+        <text x="930" y="858">abstain 率 · 誤執行計數 · 各偵測器攔截量</text>
+        <text x="930" y="874" font-size="9.5" opacity="0.7">吃 baseline.json，現在就能做</text>
+      </g>
+      <g stroke="currentColor" stroke-opacity="0.3" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#m-a)">
+        <line x1="300" y1="766" x2="320" y2="796"/>
+        <line x1="700" y1="766" x2="712" y2="796"/>
+        <line x1="1100" y1="766" x2="1099" y2="796"/>
+      </g>
+
+      <!-- ════════ 控制平面 ════════ -->
+      <rect x="116" y="906" width="1182" height="94" fill="currentColor" opacity="0.05" stroke="currentColor" stroke-opacity="0.25" stroke-dasharray="5 4"/>
+      <g>
+        <rect x="132" y="924" width="276" height="62" fill="currentColor" opacity="0.07"/>
+        <rect x="420" y="924" width="276" height="62" fill="#B84A16" opacity="0.12"/>
+        <rect x="708" y="924" width="276" height="62" fill="currentColor" opacity="0.07"/>
+        <rect x="996" y="924" width="286" height="62" fill="currentColor" opacity="0.07"/>
+      </g>
+      <g font-family="Noto Sans TC, sans-serif" font-size="12" font-weight="700" fill="currentColor">
+        <text x="146" y="946">GitHub Actions</text><text x="434" y="946">Terraform IaC</text>
+        <text x="722" y="946">Secret Manager</text><text x="1010" y="946">監控與成本告警</text>
+      </g>
+      <g font-family="Noto Sans TC, sans-serif" font-size="10" fill="currentColor" opacity="0.75">
+        <text x="146" y="964">CI 六道關卡：探針唯讀掃描 · 允許清單</text>
+        <text x="146" y="978">分類法漂移 · 資料再現性 · prompt 回歸</text>
+        <text x="434" y="964">三環境變數檔 · 排程頻率進版控</text>
+        <text x="434" y="978" font-weight="700" fill="#B84A16">IAM 只綁 read → 探針唯讀的第二層護欄</text>
+        <text x="722" y="964">OIDC 短期憑證，金鑰值不進 repo</text>
+        <text x="722" y="978">staging 影子模式跑滿 48h 才上 prod</text>
+        <text x="1010" y="964">單位工單 token 成本按 Agent 分攤</text>
+        <text x="1010" y="978" font-weight="700" fill="#B84A16">誤執行 &gt; 0 → 整套自動降級為只建議</text>
+      </g>
+      <g stroke="#B84A16" stroke-opacity="0.5" stroke-width="1.3" stroke-dasharray="4 3" marker-end="url(#m-o)">
+        <line x1="558" y1="920" x2="558" y2="886"/>
+        <line x1="1139" y1="920" x2="1139" y2="886"/>
+      </g>
+      <text x="620" y="900" font-family="Noto Sans TC, sans-serif" font-size="9.5" fill="#B84A16">控制平面不參與執行，只決定執行平面長什麼樣、能碰什麼</text>
+
+      <!-- ════════ 圖例 ════════ -->
+      <g transform="translate(116, 1016)">
+        <line x1="0" y1="0" x2="26" y2="0" stroke="#B84A16" stroke-width="2" marker-end="url(#m-o)"/>
+        <text x="34" y="4" font-family="Noto Sans TC, sans-serif" font-size="10.5" fill="currentColor" opacity="0.8">預防路徑 · 8 分鐘 · 工程時數 0</text>
+        <line x1="248" y1="0" x2="274" y2="0" stroke="currentColor" stroke-opacity="0.5" stroke-width="1.8" marker-end="url(#m-a)"/>
+        <text x="282" y="4" font-family="Noto Sans TC, sans-serif" font-size="10.5" fill="currentColor" opacity="0.8">工單路徑 · 中位 10.3 小時</text>
+        <line x1="470" y1="0" x2="496" y2="0" stroke="#B84A16" stroke-width="1.6" stroke-dasharray="5 4"/>
+        <text x="504" y="4" font-family="Noto Sans TC, sans-serif" font-size="10.5" fill="currentColor" opacity="0.8">學習迴圈與控制關係</text>
+        <line x1="672" y1="0" x2="698" y2="0" stroke="currentColor" stroke-opacity="0.35" stroke-width="1.3" stroke-dasharray="3 3"/>
+        <text x="706" y="4" font-family="Noto Sans TC, sans-serif" font-size="10.5" fill="currentColor" opacity="0.8">觀察與讀寫</text>
+      </g>
+    </svg>
+    <figcaption><b>整體流程架構圖</b>　橫軸是時間（① 異常發生到 ⑦ 驗證學習），縱軸是誰在做事。看三件事就夠：<b>橘色那條線</b>從偵測直接跳到自動處置，中間完全跳過人和 AI 分診——這是預防路徑，佔 48.9% 的工單量；<b>中間那條橘色虛線</b>把系統切成兩半，以上唯讀、以下寫入，決定了哪些事 AI 可以自己做；<b>右下角的學習迴圈</b>把結案學到的東西變成新偵測規則，讓灰色路徑上的問題逐年往橘色路徑搬。</figcaption>
+  </figure>

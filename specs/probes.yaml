@@ -1,0 +1,110 @@
+# 唯讀探針介面定義
+#
+# 鐵則：這裡定義的每一支探針都必須是唯讀的。
+#   - 程式層：src/adops_triage/probes/ 下不得出現寫入語意呼叫，由 CI 靜態掃描把關
+#   - 權限層：Terraform 綁定給診斷服務的服務帳號只有 read 角色，寫入會被平台回 403
+#   兩層護欄缺一不可 —— 程式碼自律擋不住模型幻覺，IAM 擋得住。
+
+version: "1.0.0"
+
+defaults:
+  read_only: true
+  timeout_seconds: 30
+  cache_ttl_minutes: 15        # 同資產同時窗不重複打平台 API
+  redact_pii_before_return: true
+  max_calls_per_ticket: 8      # 診斷 Agent 的探針預算，超過即中止並轉人工
+
+probes:
+
+  - id: probe_pixel_events
+    label: 像素事件量與參數覆蓋率
+    args:
+      asset_id: {type: string, required: true}
+      date_from: {type: date, required: true}
+      date_to: {type: date, required: true}
+    returns:
+      daily_event_counts: 依日期與事件名稱的事件量
+      param_coverage: 各參數的填充率（value/currency/content_ids/event_id）
+      trigger_pages: 事件觸發的頁面路徑分布
+      week_over_week_delta_pct: 與前一週同期的變化幅度
+    diagnoses: [事件追蹤異常, 歸因與報表]
+
+  - id: probe_emq
+    label: 事件比對品質分數與識別參數覆蓋
+    args:
+      pixel_id: {type: string, required: true}
+    returns:
+      emq_score: 0-10
+      param_coverage: {em: float, ph: float, fbp: float, fbc: float, external_id: float,
+                       fn: float, ln: float, zp: float}
+      dedup_warnings: 去重異常告警清單
+      hash_format_errors: 雜湊格式錯誤樣本
+    notes: |
+      參數影響權重（由高至低）：fbc / em > ph / fbp > fn·ln / zp / external_id > 地理·IP·UA。
+      補上電話號碼通常是單一改動中最大的分數提升。
+    diagnoses: [受眾與媒合]
+
+  - id: probe_feed_vs_landing
+    label: Feed 值與到達頁逐項比對
+    args:
+      catalog_id: {type: string, required: true}
+      sample_size: {type: int, default: 200}
+    returns:
+      mismatches: 差異清單（item_id, field, feed_value, landing_value）
+      mismatch_rate_by_field: 各欄位的不符比率
+      structured_data_present: 到達頁是否有 schema.org 標記
+      disapproval_reasons: 目前的拒登原因分布
+    notes: 價格／庫存與到達頁不符是 2026 年商品拒登第一大原因，優先比對這兩欄。
+    diagnoses: [商品資訊與Feed]
+
+  - id: probe_gtm_versions
+    label: GTM 容器版本與發布紀錄
+    args:
+      container_id: {type: string, required: true}
+      lookback_days: {type: int, default: 30}
+    returns:
+      versions: 版本清單（版本號、發布時間、發布者、變更摘要）
+      diff_vs_last_stable: 與上一個穩定版本的差異
+      trigger_changes: 觸發器與變數的異動項目
+    diagnoses: [事件追蹤異常, API與整合, 隱私與政策]
+
+  - id: probe_cross_source_recon
+    label: 跨來源三方對帳
+    args:
+      client: {type: string, required: true}
+      date_from: {type: date, required: true}
+      date_to: {type: date, required: true}
+    returns:
+      platform_conversions: 各平台回報轉換數
+      ga4_conversions: GA4 回報轉換數
+      backend_orders: 後台實際訂單數
+      variance_pct: 三方兩兩差異率
+      attribution_windows: 各來源的歸因視窗設定
+    notes: 差異率超過 20% 才視為異常；平台與 GA4 歸因邏輯本就不同，小幅差異屬預期行為。
+    diagnoses: [歸因與報表, 受眾與媒合]
+
+  - id: probe_token_status
+    label: 憑證狀態與 API 錯誤率
+    args:
+      account_id: {type: string, required: true}
+    returns:
+      tokens: 憑證清單（類型、到期日、剩餘天數、範圍）
+      api_error_rate_24h: 近 24 小時 API 錯誤率
+      recent_error_codes: 最近的錯誤碼分布
+    notes: 到期前 14 天即應預警，不要等到失效。
+    diagnoses: [帳號與權限, API與整合]
+
+  - id: probe_platform_changelog
+    label: 平台變更公告與客戶使用參數比對
+    args:
+      date_from: {type: date, required: true}
+      date_to: {type: date, required: true}
+      features_used: {type: array, required: true, desc: 該客戶實際使用的 API 參數與功能清單}
+    returns:
+      changes: 期間內的平台變更清單（日期、平台、變更內容、廢止與否）
+      impacted_features: 與該客戶使用清單的交集
+      silent_failure_risk: 是否屬於「不報錯但回空值」的靜默失敗類型
+    notes: |
+      這支探針專門對付靜默失敗。2026-01-12 Meta 移除 7d_view / 28d_view 後，
+      API 回傳空值而非錯誤，第三方報表工具收到空白卻無告警 —— 只有主動比對接得住。
+    diagnoses: [歸因與報表, 事件追蹤異常, 隱私與政策]

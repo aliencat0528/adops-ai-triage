@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+env:
+  PYTHONPATH: src
+
+jobs:
+  # ---------------------------------------------------------- 關卡 1
+  lint-and-test:
+    name: 關卡1 · lint / type / unit test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11", cache: pip }
+      - run: pip install -r requirements.txt
+      - run: ruff check src tools
+      - run: ruff format --check src tools
+      - run: pytest tests -q
+
+  # ------------------------------------------- 關卡 2/3/4：架構護欄
+  guardrails:
+    name: 關卡2-4 · 架構護欄
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11", cache: pip }
+      - run: pip install -r requirements.txt
+
+      - name: 關卡2 · Spec 契約驗證（分類法漂移）
+        run: python tools/check_taxonomy_drift.py --spec specs/taxonomy.yaml --src src
+
+      - name: 關卡3 · 探針唯讀靜態掃描
+        run: python tools/check_probes_readonly.py src/adops_triage/probes
+
+      - name: 關卡4 · Playbook 引用檢查
+        run: python tools/check_playbook_refs.py --spec specs/playbook_registry.yaml --src src
+
+  # ---------------------------------------------------------- 關卡 5
+  dataset-repro:
+    name: 關卡5 · 資料再現性
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11", cache: pip }
+      - run: pip install -r requirements.txt
+      - name: 固定種子重新生成並比對 hash
+        run: |
+          python -m adops_triage.generate_dataset --seed 20260823 --out /tmp/tickets.csv
+          echo "$(cat tests/fixtures/dataset.sha256)  /tmp/tickets.csv" | sha256sum -c -
+
+  # ---------------------------------------------------------- 關卡 6
+  prompt-eval:
+    name: 關卡6 · Prompt 黃金集回歸
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.labels.*.name, 'agent-change')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11", cache: pip }
+      - run: pip install -r requirements.txt
+      - name: 對黃金測試集跑分類與診斷評測
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python -m adops_triage.eval.run --suite golden --min-accuracy 0.85
+      # 準確率退步超過門檻即 fail，擋下 merge。
+      # 這是 AI 系統最容易無聲失控的地方——模型或 prompt 一改，行為就漂移。
+
+  # ------------------------------------------------- 基礎設施 plan
+  terraform-plan:
+    name: Terraform plan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      id-token: write        # OIDC 短期憑證，不使用長期金鑰
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - name: 以 OIDC 取得雲端憑證
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.WIF_PROVIDER }}
+          service_account: ${{ vars.TF_PLAN_SA }}
+      - run: terraform -chdir=infra init
+      - run: terraform -chdir=infra plan -var-file=envs/staging.tfvars -no-color
+      # apply 不在 CI 執行——需人核准後由 deploy workflow 觸發

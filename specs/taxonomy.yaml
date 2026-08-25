@@ -1,0 +1,210 @@
+# 分類法單一真實來源（Single Source of Truth）
+# 任何 Python 程式需要這些列舉值時，一律從這裡讀取，不要硬寫字串常數。
+version: "1.0.0"
+updated: "2026-08-23"
+
+org_contexts:
+  AGN: 廣告代理商內部RD支援
+  SAAS: MarTech SaaS客戶技術支援
+  INH: 電商品牌in-house團隊
+
+platforms:
+  META: Meta(Pixel+CAPI)
+  GOOGLE: Google(Ads/GA4/GTM)
+  LINE: LINE(LAP/LINE Tag)
+  FEED: 商品Feed/Catalog
+  TIKTOK: TikTok Ads
+  MULTI: 跨平台
+
+# 問題分類樹：大類 → 細類
+issue_taxonomy:
+  事件追蹤異常:
+    - 轉換事件完全遺失
+    - 事件量驟降30%以上
+    - 事件重複計算(dedup失效)
+    - 事件參數缺失(value/currency/content_ids)
+    - 事件觸發時機錯誤(頁面未完成即觸發)
+    - App SDK事件未回傳
+    - Consent Mode/CMP導致事件下降
+    - Server-side事件與Client-side數字對不上
+  受眾與媒合:
+    - 顧客名單媒合率驟降
+    - EMQ事件比對品質分數下降
+    - 再行銷受眾規模歸零或過小
+    - CDP自訂受眾同步失敗
+    - 跨裝置ID媒合異常(MAID/IDFA)
+    - LINE MAID名單上傳失敗或比數異常
+    - Lookalike/類似受眾無法建立
+    - Enhanced Conversions雜湊值比對率過低
+  商品資訊與Feed:
+    - 商品價格與官網不符
+    - 庫存狀態不同步(已售完仍投放)
+    - Feed整批拒登／商品被拒批
+    - GTIN/item_id與Pixel content_ids對不上
+    - 商品圖片/標題規格不符被降級
+    - 幣別/運費/稅金欄位設定錯誤
+    - 多通路Feed欄位規格差異(Shopee/momo/TikTok)
+    - Feed排程更新失敗或延遲
+    - product set動態商品組合規則錯誤
+  歸因與報表:
+    - 平台數據與GA4落差過大
+    - 平台回報轉換與後台實際訂單落差
+    - 歸因視窗設定不一致造成報表對不起來
+    - UTM參數遺失或被重導覆蓋
+    - 報表排程失敗／資料延遲未更新
+    - 重複訂單／測試訂單造成營收灌水
+    - 自訂維度／自訂指標未帶入
+  帳號與權限:
+    - 資產綁定/BM商業管理平台權限問題
+    - API Token/Refresh Token過期
+    - 廣告帳號被停用／付款方式失效
+    - 網域驗證失效／品牌安全設定
+  API與整合:
+    - CAPI/Measurement Protocol回傳error code
+    - Server-side GTM部署或容器異常
+    - Webhook未觸發或重送失敗
+    - 第三方工具串接失敗(CDP/EDM/CRM)
+    - API rate limit／配額不足導致中斷
+  素材與投放設定:
+    - 動態素材參數未帶入(價格/折扣)
+    - 版位不支援素材規格被拒
+    - 批次出價／預算API設定失敗
+    - 自動化規則未依排程執行
+  隱私與政策:
+    - Consent Mode v2／CMP同意訊號設定
+    - 個資／敏感類別受限無法投放
+    - iOS ATT／隱私沙盒造成成效衰退
+    - 平台審核政策拒登(廣告文案/到達頁)
+
+root_causes:
+  FE:
+    label: 客戶端網站改版／前端代碼異動
+    preventable: true
+    detector: tag_sentinel
+  GTM:
+    label: GTM容器設定或版本發布錯誤
+    preventable: true
+    detector: gtm_sentinel
+  POLICY:
+    label: 平台政策／API規格變更
+    preventable: true
+    detector: changelog_watch
+  UPSTREAM:
+    label: 上游資料源異常(ERP/OMS/CDP)
+    preventable: true
+    detector: feed_health
+  USER:
+    label: 提單人設定或操作認知錯誤
+    preventable: partial
+    detector: config_audit
+  AUTH:
+    label: API憑證／權限失效
+    preventable: true
+    detector: token_watch
+  BUG:
+    label: 內部系統程式Bug
+    preventable: false
+    detector: error_rate_alert
+  THIRD:
+    label: 第三方服務中斷或延遲
+    preventable: true
+    detector: vendor_status
+  NOISSUE:
+    label: 非問題(預期行為／認知落差)
+    preventable: partial
+    detector: kb_match
+  DATA:
+    label: 資料定義／歸因口徑不一致
+    preventable: true
+    detector: cross_source_recon
+  INFRA:
+    label: 基礎架構／流量負載問題
+    preventable: true
+    detector: schedule_sla
+
+resolution_types:
+  CODE: 程式修復(內部)
+  CONFIG: 設定調整
+  EDU: 教育說明／文件引導
+  CLIENT: 請客戶端／系統商修改
+  VENDOR: 向平台原廠申訴或開case
+  NONE: 無需處理(誤報結案)
+  ROUTE: 轉單至其他團隊
+
+ai_automation_levels:
+  L0:
+    label: 需人工深度介入
+    description: 內部程式 Bug、跨系統疑難，AI 僅提供上下文
+  L1:
+    label: AI分診與補件
+    description: AI 負責把單問清楚、丟對人，不碰內容判斷
+  L2:
+    label: AI自助回覆
+    description: 知識庫可直接解答，必須附引用來源，無把握則 abstain
+  L3:
+    label: AI自動診斷
+    description: AI 跑唯讀探針直接指出根因，人做修復決策
+  L4:
+    label: AI自動修復
+    description: 僅限低風險可逆動作，且來自 playbook 允許清單
+
+severity_levels:
+  S1: 投放中斷/嚴重失真
+  S2: 成效顯著受損
+  S3: 局部影響
+  S4: 無立即影響
+
+priority_levels:
+  P0: 立即
+  P1: 當日
+  P2: 本週
+  P3: 排程
+
+risk_tiers:
+  low:
+    label: 低風險（可逆）
+    approval: auto
+    daily_cap: 20
+  medium:
+    label: 中風險
+    approval: single_human_approval
+    daily_cap: 5
+  high:
+    label: 高風險（不可逆）
+    approval: recommendation_only
+    daily_cap: 0
+
+# 2026 真實平台事件錨點：資料生成器會在這些日期附近製造工單尖峰
+platform_events:
+  - id: META_VIEW_ATTR_REMOVAL
+    date: "2026-01-12"
+    platform: META
+    title: Meta 自 Ads Insights API 移除 7d_view / 28d_view 歸因視窗
+    failure_mode: 靜默失敗（API 回空值而非報錯）
+    observed_impact: 回報轉換數下降 15–40%，長決策週期產業受創最深
+    detector: changelog_watch
+  - id: GA4_CONSENT_SPLIT
+    date: "2026-06-15"
+    platform: GOOGLE
+    title: Google Signals 不再控管 GA4→Ads 資料流，ad_storage 成為唯一閘門
+    failure_mode: 雙向故障（受眾歸零 或 隱私 backstop 消失變超收）
+    observed_impact: 轉換、受眾、Smart Bidding 訊號可能同時中斷
+    detector: changelog_watch
+  - id: GMC_LANDING_MISMATCH
+    date: recurring
+    platform: FEED
+    title: Merchant Center 價格／庫存與到達頁不符（2026 年第一大拒登原因）
+    failure_mode: 爬蟲比對 feed 值與到達頁內容不一致
+    observed_impact: 商品拒登，檔期尖峰時影響擴大
+    detector: feed_health
+
+# 台灣電商檔期（工單量季節性尖峰）
+tw_ecommerce_peaks:
+  - { name: 女王節, month: 3, day: 8 }
+  - { name: 母親節, month: 5, day: 10 }
+  - { name: 618年中慶, month: 6, day: 18 }
+  - { name: 99購物節, month: 9, day: 9 }
+  - { name: 雙十, month: 10, day: 10 }
+  - { name: 雙11, month: 11, day: 11 }
+  - { name: 雙12, month: 12, day: 12 }
+  - { name: 農曆年檔, month: 1, day: 20 }
