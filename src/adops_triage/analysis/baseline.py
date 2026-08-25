@@ -19,6 +19,10 @@ CSV = Path("data/raw/tickets.csv")
 OUT = Path("reports/baseline.json")
 
 
+# `load()` 為了分析方便加的欄，不屬於工單契約，統計欄位數時要扣掉
+DERIVED_COLS = ("csat_num",)
+
+
 def load() -> pd.DataFrame:
     df = pd.read_csv(CSV)
     df["submitted_at"] = pd.to_datetime(df["submitted_at"])
@@ -45,7 +49,7 @@ def main() -> None:
     # ---------- 0. 概況
     r["overview"] = {
         "tickets": len(df),
-        "columns": len(df.columns),
+        "columns": len([c for c in df.columns if c not in DERIVED_COLS]),
         "date_from": df["submitted_at"].min().strftime("%Y-%m-%d"),
         "date_to": df["submitted_at"].max().strftime("%Y-%m-%d"),
         "closed_rate_pct": round(len(closed) / len(df) * 100, 1),

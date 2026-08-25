@@ -124,6 +124,8 @@
     "min_completeness_to_submit": 40,
     "p0_override_allowed": true,
     "p0_override_flag": "高風險急件-資訊不全",
+    "reproducible_needs_extra_round": "無法重現",
+    "reproducible_extra_round_flag": "無法重現-預期需額外一輪確認",
     "max_clarification_rounds": 3,
     "max_questions_per_round": 2
   }

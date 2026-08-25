@@ -13,11 +13,22 @@ L3 · 唯讀探針
 """
 from __future__ import annotations
 
+import hashlib
 import random
 from datetime import date, timedelta
 from typing import Any
 
 READ_ONLY = True   # 供執行期斷言使用
+
+
+def _stable_seed(*parts: str) -> int:
+    """mock 資料的隨機種子。
+
+    不用內建 `hash()`——它對字串每個 process 重新隨機化，會讓同一支探針
+    在不同 process 回傳不同 mock 值，測試與 demo 都不可重現。
+    """
+    joined = "|".join(parts)
+    return int(hashlib.sha256(joined.encode("utf-8")).hexdigest()[:8], 16)
 
 
 def _assert_readonly() -> None:
@@ -30,7 +41,7 @@ def _assert_readonly() -> None:
 def probe_pixel_events(asset_id: str, date_from: date, date_to: date) -> dict[str, Any]:
     """事件量趨勢、參數覆蓋率、觸發頁面分布。"""
     _assert_readonly()
-    rng = random.Random(hash((asset_id, str(date_from))) & 0xFFFF)
+    rng = random.Random(_stable_seed(asset_id, str(date_from)))
     days = (date_to - date_from).days + 1
     base = rng.randint(800, 12000)
     return {
@@ -54,7 +65,7 @@ def probe_emq(pixel_id: str) -> dict[str, Any]:
     補上電話號碼通常是單一改動中最大的分數提升。
     """
     _assert_readonly()
-    rng = random.Random(hash(pixel_id) & 0xFFFF)
+    rng = random.Random(_stable_seed(pixel_id))
     cov = {"em": rng.uniform(.7, 1.0), "ph": rng.uniform(.0, .8), "fbp": rng.uniform(.5, 1.0),
            "fbc": rng.uniform(.2, .9), "external_id": rng.uniform(.0, .7),
            "fn": rng.uniform(.2, .9), "ln": rng.uniform(.2, .9), "zp": rng.uniform(.0, .6)}
@@ -70,7 +81,7 @@ def probe_emq(pixel_id: str) -> dict[str, Any]:
 def probe_feed_vs_landing(catalog_id: str, sample_size: int = 200) -> dict[str, Any]:
     """Feed 值與到達頁逐項比對。價格與庫存不符是商品拒登第一大原因。"""
     _assert_readonly()
-    rng = random.Random(hash(catalog_id) & 0xFFFF)
+    rng = random.Random(_stable_seed(catalog_id))
     n_bad = rng.randint(0, max(1, sample_size // 8))
     mismatches = []
     for i in range(n_bad):
@@ -90,7 +101,7 @@ def probe_feed_vs_landing(catalog_id: str, sample_size: int = 200) -> dict[str, 
 
 def probe_gtm_versions(container_id: str, lookback_days: int = 30) -> dict[str, Any]:
     _assert_readonly()
-    rng = random.Random(hash(container_id) & 0xFFFF)
+    rng = random.Random(_stable_seed(container_id))
     return {
         "versions": [{"version": 40 + i, "published_at": str(date.today() - timedelta(days=d)),
                       "publisher": rng.choice(["客戶端IT", "我方顧問"]), "summary": "調整觸發器條件"}
@@ -103,7 +114,7 @@ def probe_gtm_versions(container_id: str, lookback_days: int = 30) -> dict[str, 
 def probe_cross_source_recon(client: str, date_from: date, date_to: date) -> dict[str, Any]:
     """平台 / GA4 / 後台訂單三方對帳。差異率 >20% 才視為異常。"""
     _assert_readonly()
-    rng = random.Random(hash((client, str(date_from))) & 0xFFFF)
+    rng = random.Random(_stable_seed(client, str(date_from)))
     backend = rng.randint(40, 900)
     return {
         "platform_conversions": int(backend * rng.uniform(0.6, 1.5)),
@@ -117,7 +128,7 @@ def probe_cross_source_recon(client: str, date_from: date, date_to: date) -> dic
 def probe_token_status(account_id: str) -> dict[str, Any]:
     """憑證到期日與 API 錯誤率。到期前 14 天即應預警。"""
     _assert_readonly()
-    rng = random.Random(hash(account_id) & 0xFFFF)
+    rng = random.Random(_stable_seed(account_id))
     return {
         "tokens": [{"type": "access_token", "expires_in_days": rng.randint(-2, 90),
                     "scopes": ["ads_read", "catalog_management"]}],

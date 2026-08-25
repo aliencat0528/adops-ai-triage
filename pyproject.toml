@@ -1,0 +1,12 @@
+# ruff 設定。存在的理由是「定版」——
+# ruff 的預設規則集會隨版本擴大（0.16 起把 UP／DTZ／RUF／PIE 納入預設），
+# `requirements.txt` 只寫 `ruff>=0.5`，沒有這個檔案的話，同一份程式碼
+# 會因為 CI 裝到新版 ruff 而突然變成 34 處不合。定版之後才有穩定的紅綠燈。
+[tool.ruff]
+line-length = 100          # 與根 CLAUDE.md「行寬上限 100」一致
+target-version = "py311"   # 與 CLAUDE.md 第 6 節「Python 3.11+」一致
+
+[tool.ruff.lint]
+# 對齊本專案寫成當時（ruff 0.5）的預設規則集：pycodestyle 錯誤 + pyflakes。
+# 要加規則請一起把既有程式碼修乾淨，不要留著紅燈。
+select = ["E4", "E7", "E9", "F"]

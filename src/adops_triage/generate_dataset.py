@@ -24,11 +24,23 @@ python -m adops_triage.generate_dataset --n 640 --seed 20260823
 from __future__ import annotations
 
 import argparse
+import hashlib
 import random
 from datetime import datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
+
+# ---------------------------------------------------------------- 工具
+
+def stable_int(text: str) -> int:
+    """把字串轉成跨 process 穩定的整數。
+
+    不能用內建 `hash()`——CPython 對字串的 hash 每個 process 重新隨機化
+    （PYTHONHASHSEED），同一顆 --seed 會產出不同資料，違反「資料生成必須可重現」。
+    """
+    return int(hashlib.sha256(text.encode("utf-8")).hexdigest()[:8], 16)
+
 
 # ---------------------------------------------------------------- 常數
 
@@ -583,7 +595,7 @@ def build(n: int = 640, seed: int = 20260823) -> pd.DataFrame:
             "ai_automation_level": ai_level,
             "ai_preventable": ai_preventable,
             "detection_signal": detection,
-            "kb_article_id": f"KB-{abs(hash(subcat)) % 900 + 100}",
+            "kb_article_id": f"KB-{stable_int(subcat) % 900 + 100}",
             "platform_event_id": ev_id or "—",
         })
 

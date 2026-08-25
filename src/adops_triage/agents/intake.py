@@ -123,8 +123,8 @@ class IntakeAgent:
         flags: list[str] = []
         if str(ticket.get("priority", "")).startswith("P0") and completeness < 60:
             flags.append(self.guards["p0_override_flag"])
-        if ticket.get("reproducible") == "無法重現":
-            flags.append("無法重現-預期需額外一輪確認")
+        if ticket.get("reproducible") == self.guards["reproducible_needs_extra_round"]:
+            flags.append(self.guards["reproducible_extra_round_flag"])
 
         min_score = self.guards["min_completeness_to_submit"]
         can_submit = completeness >= min_score and not blocking
